@@ -14,7 +14,7 @@ public class ABICompiler {
     private static final int MAX_CLASS_BYTES = 1024 * 1024;
 
     static public void main(String[] args) {
-        String jarPath = "/tmp/avm/abicompiler.jar";
+        String jarPath = "abicompiler.jar";
         byte[] mainClass = null;
         try {
             mainClass = safeLoadFromBytes(new FileInputStream(jarPath));

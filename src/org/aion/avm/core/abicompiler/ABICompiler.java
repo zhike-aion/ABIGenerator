@@ -3,7 +3,9 @@ package org.aion.avm.core.abicompiler;
 import org.objectweb.asm.*;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
@@ -16,26 +18,38 @@ public class ABICompiler {
     private static final int MAX_CLASS_BYTES = 1024 * 1024;
 
      private static ClassReader reader;
+     private byte[] jarBytes;
+     private byte[] mainClass;
+     List<String> callables = new ArrayList<>();
 
-    public static void main(String[] args) {
-        String jarPath = "nomain/nomain.jar";
-        byte[] mainClass = null;
-        try {
-            mainClass = safeLoadFromBytes(new FileInputStream(jarPath));
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (SizeException e) {
-            e.printStackTrace();
-        }
+//    public static void main(String[] args) {
+//        String jarPath = "nomain/nomain.jar";
+//        byte[] mainClass = null;
+//        try {
+//            mainClass = safeLoadFromBytes(new FileInputStream(jarPath));
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        } catch (SizeException e) {
+//            e.printStackTrace();
+//        }
+//
+//        extractMethods(mainClass);
+//        generateMain();
+//    }
 
-        extractMethods(mainClass);
-        generateMain();
+    private void setJarBytes(byte[] bytes) {
+        jarBytes = bytes;
     }
 
-    private static void extractMethods(byte[] clazz) {
-        reader = new ClassReader(clazz);
-        ClassVisitor classVisitor = new ABICompilerClassVisitor();
+    public void extractMethods() {
+        reader = new ClassReader(mainClass);
+        ABICompilerClassVisitor classVisitor = new org.aion.avm.core.abicompiler.ABICompilerClassVisitor();
         reader.accept(classVisitor, 0);
+        callables = classVisitor.getCallables();
+    }
+
+    public List<String> getCallables() {
+        return callables;
     }
 
     private static void generateMain() {
@@ -69,7 +83,7 @@ public class ABICompiler {
         }
     }
 
-    private static byte[] safeLoadFromBytes(InputStream byteReader) throws IOException, SizeException {
+    public void safeLoadFromBytes(InputStream byteReader) throws IOException, SizeException {
         Map<String, byte[]> classBytesByQualifiedNames = new HashMap<>();
         String mainClassName = null;
 
@@ -108,7 +122,7 @@ public class ABICompiler {
                 }
             }
         }
-        return classBytesByQualifiedNames.get(mainClassName);
+        mainClass = classBytesByQualifiedNames.get(mainClassName);
     }
 
     private static String internalNameToFulllyQualifiedName(String internalName) {

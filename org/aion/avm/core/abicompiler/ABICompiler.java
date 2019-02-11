@@ -10,11 +10,15 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
 
+import static org.objectweb.asm.Opcodes.*;
+
 public class ABICompiler {
     private static final int MAX_CLASS_BYTES = 1024 * 1024;
 
-    static public void main(String[] args) {
-        String jarPath = "abicompiler.jar";
+     private static ClassReader reader;
+
+    public static void main(String[] args) {
+        String jarPath = "nomain/nomain.jar";
         byte[] mainClass = null;
         try {
             mainClass = safeLoadFromBytes(new FileInputStream(jarPath));
@@ -23,11 +27,46 @@ public class ABICompiler {
         } catch (SizeException e) {
             e.printStackTrace();
         }
-        ClassReader reader = new ClassReader(mainClass);
+
+        extractMethods(mainClass);
+        generateMain();
+    }
+
+    private static void extractMethods(byte[] clazz) {
+        reader = new ClassReader(clazz);
         ClassVisitor classVisitor = new ABICompilerClassVisitor();
         reader.accept(classVisitor, 0);
+    }
 
+    private static void generateMain() {
+        //Generating main()
+        ClassWriter classWriter = new ClassWriter(0);
+        ClassVisitor mcw = new ClassVisitor(Opcodes.ASM6, classWriter){};
+        reader.accept(mcw, 0);
 
+        {
+            MethodVisitor methodVisitor = classWriter.visitMethod(ACC_PUBLIC | ACC_STATIC, "main", "()[B", null, null);
+            methodVisitor.visitCode();
+            Label label0 = new Label();
+            methodVisitor.visitLabel(label0);
+            methodVisitor.visitLineNumber(8, label0);
+            methodVisitor.visitLdcInsn(Type.getType("Lorg/aion/avm/core/abicompiler/ABICompilerTestTarget;"));
+            methodVisitor.visitMethodInsn(INVOKESTATIC, "org/aion/avm/api/BlockchainRuntime", "getData", "()[B", false);
+            methodVisitor.visitMethodInsn(INVOKESTATIC, "org/aion/avm/api/ABIDecoder", "decodeAndRunWithClass", "(Ljava/lang/Class;[B)[B", false);
+            methodVisitor.visitInsn(ARETURN);
+            methodVisitor.visitMaxs(2, 0);
+            methodVisitor.visitEnd();
+        }
+        //Write the output to a class file
+        DataOutputStream dout= null;
+        try {
+            dout = new DataOutputStream(new FileOutputStream("ClassModificationDemoNoMain.class"));
+            dout.write(classWriter.toByteArray());
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private static byte[] safeLoadFromBytes(InputStream byteReader) throws IOException, SizeException {

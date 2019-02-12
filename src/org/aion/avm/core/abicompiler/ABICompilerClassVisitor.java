@@ -18,6 +18,7 @@ import org.objectweb.asm.Type;
 public class ABICompilerClassVisitor extends ClassVisitor {
     private boolean isMain;
     private boolean hasMain = false;
+    private String className;
     private List<ABICompilerMethodVisitor> methodVisitors = new ArrayList<>();
 
     public ABICompilerClassVisitor(ClassWriter cw) {
@@ -33,10 +34,16 @@ public class ABICompilerClassVisitor extends ClassVisitor {
         for (ABICompilerMethodVisitor mv : methodVisitors) {
             if (mv.isCallable()) {
 
-                signatures.add(mv.getSignature());
+                signatures.add(this.className + ": " + mv.getSignature());
             }
         }
         return signatures;
+    }
+
+    @Override
+    public void visit(int version, int access, java.lang.String name, java.lang.String signature, java.lang.String superName, java.lang.String[] interfaces) {
+        this.className = name;
+        super.visit(version, access, name, signature, superName, interfaces);
     }
 
     @Override

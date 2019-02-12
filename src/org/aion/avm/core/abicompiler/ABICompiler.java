@@ -19,6 +19,7 @@ public class ABICompiler {
 
     private String mainClassName;
     private byte[] mainClassBytes;
+    private List<byte[]> otherClasses = new ArrayList<>();
     private List<String> callables = new ArrayList<>();
     private Map<String, byte[]> classMap = new HashMap<>();
 
@@ -54,6 +55,8 @@ public class ABICompiler {
             callables.addAll(classVisitor.getCallables());
             if (clazz.getKey().equals(mainClassName)) {
                 mainClassBytes = classWriter.toByteArray();
+            } else {
+                otherClasses.add(classWriter.toByteArray());
             }
         }
     }
@@ -111,6 +114,10 @@ public class ABICompiler {
 
     private static String internalNameToFulllyQualifiedName(String internalName) {
         return internalName.replaceAll("/", ".");
+    }
+
+    public List<byte[]> getOtherClasses() {
+        return this.otherClasses;
     }
 
     private static class SizeException extends Exception {

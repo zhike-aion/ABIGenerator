@@ -27,14 +27,13 @@ public class AnnotationsTest {
         try {
             byte[] jar = JarBuilder.buildJarForMainAndClasses(SimpleDApp.class);
 
-            compiler.safeLoadFromBytes(new ByteArrayInputStream(jar));
-            compiler.extractMethods();
+            compiler.compile(new ByteArrayInputStream(jar));
             callables = compiler.getCallables();
 
         } catch (Throwable e) {
             e.printStackTrace();
         }
-        assertEquals(callables.size(), 2);
+        assertEquals(2, callables.size());
         assertTrue(callables.get(0).indexOf("test1") > 0);
         assertTrue(callables.get(1).indexOf("test2") > 0);
     }

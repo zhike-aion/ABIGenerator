@@ -45,9 +45,9 @@ public class ABICompilerClassVisitor extends ClassVisitor {
         if (name.equals("main") && ((access & Opcodes.ACC_PUBLIC) != 0)) {
             hasMain = true;
         }
-        ABICompilerMethodVisitor mv = new ABICompilerMethodVisitor(access, name, descriptor);
+        ABICompilerMethodVisitor mv = new ABICompilerMethodVisitor(access, name, descriptor,
+                super.visitMethod(access, name, descriptor, signature, exceptions));
         methodVisitors.add(mv);
-        super.visitMethod(access, name, descriptor, signature, exceptions);
         return mv;
     }
 

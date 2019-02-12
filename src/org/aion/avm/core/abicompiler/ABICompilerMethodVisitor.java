@@ -36,8 +36,8 @@ public class ABICompilerMethodVisitor extends MethodVisitor {
         return signature;
     }
 
-    public ABICompilerMethodVisitor(int access, String methodName, String methodDescriptor) {
-        super(Opcodes.ASM6);
+    public ABICompilerMethodVisitor(int access, String methodName, String methodDescriptor, MethodVisitor mv) {
+        super(Opcodes.ASM6, mv);
         this.access = access;
         this.methodName = methodName;
         this.methodDescriptor = methodDescriptor;
@@ -49,6 +49,6 @@ public class ABICompilerMethodVisitor extends MethodVisitor {
         if (isPublic && Type.getType(descriptor).getClassName().equals(Callable.class.getName())) {
             callable = true;
         }
-        return null;
+        return super.visitAnnotation(descriptor, visible);
     }
 }

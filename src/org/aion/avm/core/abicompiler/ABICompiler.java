@@ -1,8 +1,7 @@
 package org.aion.avm.core.abicompiler;
 
-import org.objectweb.asm.*;
-
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -11,84 +10,67 @@ import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
-
-import static org.objectweb.asm.Opcodes.*;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
 
 public class ABICompiler {
+
     private static final int MAX_CLASS_BYTES = 1024 * 1024;
 
-     private static ClassReader reader;
-     private byte[] jarBytes;
-     private byte[] mainClass;
-     List<String> callables = new ArrayList<>();
+    private String mainClassName;
+    private byte[] mainClassBytes;
+    private List<String> callables = new ArrayList<>();
+    private Map<String, byte[]> classMap = new HashMap<>();
 
-//    public static void main(String[] args) {
-//        String jarPath = "nomain/nomain.jar";
-//        byte[] mainClass = null;
-//        try {
-//            mainClass = safeLoadFromBytes(new FileInputStream(jarPath));
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        } catch (SizeException e) {
-//            e.printStackTrace();
-//        }
-//
-//        extractMethods(mainClass);
-//        generateMain();
-//    }
+    //    public static void main(String[] args) {
+    //        String jarPath = "nomain/nomain.jar";
+    //        byte[] mainClass = null;
+    //        try {
+    //            mainClass = safeLoadFromBytes(new FileInputStream(jarPath));
+    //        } catch (IOException e) {
+    //            e.printStackTrace();
+    //        } catch (SizeException e) {
+    //            e.printStackTrace();
+    //        }
+    //
+    //        extractMethods(mainClass);
+    //        generateMain();
+    //    }
 
-    private void setJarBytes(byte[] bytes) {
-        jarBytes = bytes;
+    public void compile(InputStream byteReader) {
+        try {
+            safeLoadFromBytes(byteReader);
+        } catch (IOException | SizeException e) {
+            e.printStackTrace();
+        }
+        for (Map.Entry<String, byte[]> clazz : classMap.entrySet()) {
+            ClassReader reader = new ClassReader(clazz.getValue());
+            ClassWriter classWriter = new ClassWriter(0);
+            ABICompilerClassVisitor classVisitor = new ABICompilerClassVisitor(classWriter) {};
+            if (clazz.getKey().equals(mainClassName)) {
+                classVisitor.setMain();
+            }
+            reader.accept(classVisitor, 0);
+            callables.addAll(classVisitor.getCallables());
+            if (clazz.getKey().equals(mainClassName)) {
+                mainClassBytes = classWriter.toByteArray();
+            }
+        }
     }
 
-    public void extractMethods() {
-        reader = new ClassReader(mainClass);
-        ABICompilerClassVisitor classVisitor = new org.aion.avm.core.abicompiler.ABICompilerClassVisitor();
-        reader.accept(classVisitor, 0);
-        callables = classVisitor.getCallables();
+    public byte[] getMainClassBytes() {
+        return mainClassBytes;
     }
 
     public List<String> getCallables() {
         return callables;
     }
 
-    private static void generateMain() {
-        //Generating main()
-        ClassWriter classWriter = new ClassWriter(0);
-        ClassVisitor mcw = new ClassVisitor(Opcodes.ASM6, classWriter){};
-        reader.accept(mcw, 0);
+    private void safeLoadFromBytes(InputStream byteReader) throws IOException, SizeException {
+        classMap = new HashMap<>();
+        mainClassName = null;
 
-        {
-            MethodVisitor methodVisitor = classWriter.visitMethod(ACC_PUBLIC | ACC_STATIC, "main", "()[B", null, null);
-            methodVisitor.visitCode();
-            Label label0 = new Label();
-            methodVisitor.visitLabel(label0);
-            methodVisitor.visitLineNumber(8, label0);
-            methodVisitor.visitLdcInsn(Type.getType("Lorg/aion/avm/core/abicompiler/ABICompilerTestTarget;"));
-            methodVisitor.visitMethodInsn(INVOKESTATIC, "org/aion/avm/api/BlockchainRuntime", "getData", "()[B", false);
-            methodVisitor.visitMethodInsn(INVOKESTATIC, "org/aion/avm/api/ABIDecoder", "decodeAndRunWithClass", "(Ljava/lang/Class;[B)[B", false);
-            methodVisitor.visitInsn(ARETURN);
-            methodVisitor.visitMaxs(2, 0);
-            methodVisitor.visitEnd();
-        }
-        //Write the output to a class file
-        DataOutputStream dout= null;
-        try {
-            dout = new DataOutputStream(new FileOutputStream("ClassModificationDemoNoMain.class"));
-            dout.write(classWriter.toByteArray());
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void safeLoadFromBytes(InputStream byteReader) throws IOException, SizeException {
-        Map<String, byte[]> classBytesByQualifiedNames = new HashMap<>();
-        String mainClassName = null;
-
-        boolean verify = true;
-        try (JarInputStream jarReader = new JarInputStream(byteReader, verify)) {
+        try (JarInputStream jarReader = new JarInputStream(byteReader, true)) {
 
             Manifest manifest = jarReader.getManifest();
             if (null != manifest) {
@@ -98,19 +80,22 @@ public class ABICompiler {
                 }
             }
 
-            JarEntry entry = null;
+            JarEntry entry;
             byte[] tempReadingBuffer = new byte[MAX_CLASS_BYTES];
             while (null != (entry = jarReader.getNextJarEntry())) {
                 String name = entry.getName();
-                // We already ready the manifest so now we only want to work on classes and not any of the special modularity ones.
+                // We already ready the manifest so now we only want to work on classes and not any
+                // of the
+                // special modularity ones.
                 if (name.endsWith(".class")
                         && !name.equals("package-info.class")
-                        && !name.equals("module-info.class")
-                ) {
+                        && !name.equals("module-info.class")) {
                     // replaceAll gives us the regex so we use "$".
                     String internalClassName = name.replaceAll(".class$", "");
-                    String qualifiedClassName = internalNameToFulllyQualifiedName(internalClassName);
-                    int readSize = jarReader.readNBytes(tempReadingBuffer, 0, tempReadingBuffer.length);
+                    String qualifiedClassName =
+                            internalNameToFulllyQualifiedName(internalClassName);
+                    int readSize =
+                            jarReader.readNBytes(tempReadingBuffer, 0, tempReadingBuffer.length);
                     // Now, copy this part of the array as a correctly-sized classBytes.
                     byte[] classBytes = new byte[readSize];
                     if (0 != jarReader.available()) {
@@ -118,11 +103,10 @@ public class ABICompiler {
                         throw new SizeException(name);
                     }
                     System.arraycopy(tempReadingBuffer, 0, classBytes, 0, readSize);
-                    classBytesByQualifiedNames.put(qualifiedClassName, classBytes);
+                    classMap.put(qualifiedClassName, classBytes);
                 }
             }
         }
-        mainClass = classBytesByQualifiedNames.get(mainClassName);
     }
 
     private static String internalNameToFulllyQualifiedName(String internalName) {
@@ -130,7 +114,9 @@ public class ABICompiler {
     }
 
     private static class SizeException extends Exception {
+
         private static final long serialVersionUID = 1L;
+
         public SizeException(String entryName) {
             super("Class file too big: " + entryName);
         }

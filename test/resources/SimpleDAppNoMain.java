@@ -1,6 +1,6 @@
-package org.aion.avm.core.abicompiler;
+package resources;
 
-public class ABICompilerTestTargetNoMain {
+public class SimpleDAppNoMain {
 
     @org.aion.avm.core.abicompiler.Callable(first = "Zhike1", last = "Zhang2")
     public static boolean test1(boolean b) {

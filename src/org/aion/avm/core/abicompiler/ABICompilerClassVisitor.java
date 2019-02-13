@@ -60,7 +60,7 @@ public class ABICompilerClassVisitor extends ClassVisitor {
             methodVisitor.visitLabel(label0);
             methodVisitor.visitLineNumber(8, label0);
             methodVisitor.visitLdcInsn(
-                    Type.getType("Lorg/aion/avm/core/abicompiler/ABICompilerTestTarget;"));
+                    Type.getType("L" + this.className.replaceAll("/", ".") + ";"));
             methodVisitor.visitMethodInsn(
                     INVOKESTATIC, "org/aion/avm/api/BlockchainRuntime", "getData", "()[B", false);
             methodVisitor.visitMethodInsn(

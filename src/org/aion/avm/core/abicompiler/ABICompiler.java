@@ -1,7 +1,9 @@
 package org.aion.avm.core.abicompiler;
 
-import java.io.IOException;
-import java.io.InputStream;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
+
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -10,8 +12,6 @@ import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassWriter;
 
 public class ABICompiler {
 
@@ -23,20 +23,51 @@ public class ABICompiler {
     private List<String> callables = new ArrayList<>();
     private Map<String, byte[]> classMap = new HashMap<>();
 
-    //    public static void main(String[] args) {
-    //        String jarPath = "nomain/nomain.jar";
-    //        byte[] mainClass = null;
-    //        try {
-    //            mainClass = safeLoadFromBytes(new FileInputStream(jarPath));
-    //        } catch (IOException e) {
-    //            e.printStackTrace();
-    //        } catch (SizeException e) {
-    //            e.printStackTrace();
-    //        }
-    //
-    //        extractMethods(mainClass);
-    //        generateMain();
-    //    }
+    public static void main(String[] args) {
+        if(args.length != 1) {
+            System.out.println("Invalid parameters!");
+            usage();
+            System.exit(1);
+        }
+
+        String jarPath = args[0];
+        ABICompiler compiler = new ABICompiler();
+        FileInputStream fileInputStream = null;
+        try {
+            fileInputStream = new FileInputStream(jarPath);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+
+        compiler.compile(fileInputStream);
+
+        List<String> callables = compiler.getCallables();
+        for(String s : callables) System.out.println(s);
+
+        try {
+            DataOutputStream dout = new DataOutputStream(new FileOutputStream("Main.class"));
+            dout.write(compiler.getMainClassBytes());
+            dout.close();
+
+            List<byte[]> otherClasses = compiler.getOtherClasses();
+            for (int i = 0; i < otherClasses.size(); i++) {
+                try {
+                    dout = new DataOutputStream(new FileOutputStream("OtherClass" + i + ".class"));
+                    dout.write(otherClasses.get(i));
+                    dout.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void usage() {
+        System.out.println("Usage: ABICompiler <DApp jar path>");
+    }
 
     public void compile(InputStream byteReader) {
         try {
@@ -51,7 +82,11 @@ public class ABICompiler {
             if (clazz.getKey().equals(mainClassName)) {
                 classVisitor.setMain();
             }
-            reader.accept(classVisitor, 0);
+            try {
+                reader.accept(classVisitor, 0);
+            } catch (Exception e) {
+                throw e;
+            }
             callables.addAll(classVisitor.getCallables());
             if (clazz.getKey().equals(mainClassName)) {
                 mainClassBytes = classWriter.toByteArray();

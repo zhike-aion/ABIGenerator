@@ -3,7 +3,7 @@ package resources;
 import org.aion.avm.api.ABIDecoder;
 import org.aion.avm.api.BlockchainRuntime;
 
-public class SimpleDApp1 {
+public class SimpleDAppWrongCallable {
     public static byte[] main() {
         return ABIDecoder.decodeAndRunWithClass(SimpleDApp.class, BlockchainRuntime.getData());
     }
@@ -28,3 +28,4 @@ public class SimpleDApp1 {
         return true;
     }
 }
+

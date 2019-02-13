@@ -1,12 +1,6 @@
 package resources;
 
-import org.aion.avm.api.ABIDecoder;
-import org.aion.avm.api.BlockchainRuntime;
-
-public class SimpleDApp {
-    public static byte[] main() {
-        return ABIDecoder.decodeAndRunWithClass(SimpleDApp.class, BlockchainRuntime.getData());
-    }
+public class SimpleDAppNoMain1 {
 
     @org.aion.avm.core.abicompiler.Callable(first = "Zhike1", last = "Zhang2")
     public static boolean test1(boolean b) {

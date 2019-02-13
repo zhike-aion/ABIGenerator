@@ -16,10 +16,5 @@ public class SimpleDAppNoMain {
     public static boolean test3(int i, String s, long[] l) {
         return true;
     }
-
-    @org.aion.avm.core.abicompiler.Callable(first = "Zhike4", last = "Zhang4")
-    protected boolean test4(int i, String s, long[] l) {
-        return true;
-    }
 }
 

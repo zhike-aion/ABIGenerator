@@ -1,19 +1,11 @@
 package org.aion.avm.core.abicompiler;
 
-import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
-import static org.objectweb.asm.Opcodes.ACC_STATIC;
-import static org.objectweb.asm.Opcodes.ARETURN;
-import static org.objectweb.asm.Opcodes.INVOKESTATIC;
-
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.Label;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.*;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.objectweb.asm.Type;
+
+import static org.objectweb.asm.Opcodes.*;
 
 public class ABICompilerClassVisitor extends ClassVisitor {
     private boolean isMain;
@@ -80,6 +72,9 @@ public class ABICompilerClassVisitor extends ClassVisitor {
             methodVisitor.visitInsn(ARETURN);
             methodVisitor.visitMaxs(2, 0);
             methodVisitor.visitEnd();
+        }
+        if (!isMain && hasMain) {
+            throw new IllegalMainMethodsException("Non-main class can't have main() method!");
         }
         super.visitEnd();
     }

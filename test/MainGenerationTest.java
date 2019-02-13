@@ -1,15 +1,17 @@
+import org.aion.avm.core.abicompiler.ABICompiler;
+import org.aion.avm.core.abicompiler.IllegalMainMethodsException;
+import org.junit.Before;
+import org.junit.Test;
+import resources.SimpleDApp;
+import resources.SimpleDAppNoMain;
+import resources.SimpleDAppNoMain1;
+import util.JarBuilder;
+
 import java.io.ByteArrayInputStream;
 import java.io.DataOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
-import org.aion.avm.core.abicompiler.ABICompiler;
-import org.junit.Before;
-import org.junit.Test;
-import resources.SimpleDApp;
-import resources.SimpleDApp1;
-import resources.SimpleDAppNoMain;
-import util.JarBuilder;
 
 
 public class MainGenerationTest {
@@ -28,7 +30,7 @@ public class MainGenerationTest {
             compiler.compile(new ByteArrayInputStream(jar));
             DataOutputStream dout= null;
             try {
-                dout = new DataOutputStream(new FileOutputStream("ClassModificationDemoNoMain.class"));
+                dout = new DataOutputStream(new FileOutputStream("Main.class"));
                 dout.write(compiler.getMainClassBytes());
             } catch (IOException e) {
                 e.printStackTrace();
@@ -41,13 +43,13 @@ public class MainGenerationTest {
     @Test
     public void testOtherClassesGeneration() {
         try {
-            byte[] jar = JarBuilder.buildJarForMainAndClasses(SimpleDAppNoMain.class, SimpleDApp.class, SimpleDApp1.class);
+            byte[] jar = JarBuilder.buildJarForMainAndClasses(SimpleDAppNoMain.class, SimpleDAppNoMain1.class);
             compiler.compile(new ByteArrayInputStream(jar));
             List<byte[]> otherClasses = compiler.getOtherClasses();
             for (int i = 0; i < otherClasses.size(); i++) {
                 DataOutputStream dout = null;
                 try {
-                    dout = new DataOutputStream(new FileOutputStream("otherClass" + i + ".class"));
+                    dout = new DataOutputStream(new FileOutputStream("OtherClass" + i + ".class"));
                     dout.write(otherClasses.get(i));
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -56,5 +58,11 @@ public class MainGenerationTest {
         } catch(Throwable e){
             e.printStackTrace();
         }
+    }
+
+    @Test(expected = IllegalMainMethodsException.class)
+    public void testGetAnnotationsMultipleMainMethod() {
+        byte[] jar = JarBuilder.buildJarForMainAndClasses(SimpleDAppNoMain.class, SimpleDApp.class);
+        compiler.compile(new ByteArrayInputStream(jar));
     }
 }

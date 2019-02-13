@@ -1,8 +1,10 @@
 import org.aion.avm.core.abicompiler.ABICompiler;
+import org.aion.avm.core.abicompiler.CallableMismatchException;
 import org.junit.Before;
 import org.junit.Test;
 import resources.SimpleDApp;
-import resources.SimpleDApp1;
+import resources.SimpleDAppNoMain;
+import resources.SimpleDAppWrongCallable;
 import util.JarBuilder;
 
 import java.io.ByteArrayInputStream;
@@ -39,11 +41,17 @@ public class AnnotationsTest {
         assertTrue(callables.get(1).indexOf("test2") > 0);
     }
 
+    @Test(expected = CallableMismatchException.class)
+    public void testGetAnnotationsWrongCallable() {
+        byte[] jar = JarBuilder.buildJarForMainAndClasses(SimpleDAppWrongCallable.class);
+        compiler.compile(new ByteArrayInputStream(jar));
+    }
+
     @Test
     public void testGetAnnotationsFromMultiClasses() {
         List<String> callables = new ArrayList<>();
         try {
-            byte[] jar = JarBuilder.buildJarForMainAndClasses(SimpleDApp.class, SimpleDApp1.class);
+            byte[] jar = JarBuilder.buildJarForMainAndClasses(SimpleDApp.class, SimpleDAppNoMain.class);
 
             compiler.compile(new ByteArrayInputStream(jar));
             callables = compiler.getCallables();

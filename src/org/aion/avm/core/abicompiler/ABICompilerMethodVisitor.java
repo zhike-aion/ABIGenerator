@@ -47,7 +47,7 @@ public class ABICompilerMethodVisitor extends MethodVisitor {
     public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
         boolean isPublic = (this.access & Opcodes.ACC_PUBLIC) != 0;
         if (!isPublic && Type.getType(descriptor).getClassName().equals(Callable.class.getName())) {
-            throw new CallableMismatchException("Annotation 'Callable' mismatches 'protected'!");
+            throw new CallableMismatchException("Annotation 'Callable' mismatches non-public access modifiers(protected/private)!");
         }
         if (isPublic && Type.getType(descriptor).getClassName().equals(Callable.class.getName())) {
             callable = true;

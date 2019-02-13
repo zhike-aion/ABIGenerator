@@ -48,7 +48,7 @@ public class MainGenerationTest {
                 JarBuilder.buildJarForMainAndClasses(
                     SimpleDAppNoMain.class, SimpleDAppNoMain1.class);
             compiler.compile(new ByteArrayInputStream(jar));
-            List<byte[]> otherClasses = compiler.getOtherClasses();
+            List<byte[]> otherClasses = compiler.getOtherClassesBytes();
             for (int i = 0; i < otherClasses.size(); i++) {
                 DataOutputStream dout = null;
                 try {
@@ -75,7 +75,7 @@ public class MainGenerationTest {
             byte[] jar =
                 JarBuilder.buildJarForMainAndClasses(ChattyCalculator.class, Comparator.class);
             compiler.compile(new ByteArrayInputStream(jar));
-            List<byte[]> otherClasses = compiler.getOtherClasses();
+            List<byte[]> otherClasses = compiler.getOtherClassesBytes();
             for (int i = 0; i < otherClasses.size(); i++) {
                 DataOutputStream dout = null;
                 try {

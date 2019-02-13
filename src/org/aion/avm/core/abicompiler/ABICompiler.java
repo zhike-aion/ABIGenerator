@@ -19,12 +19,12 @@ public class ABICompiler {
 
     private String mainClassName;
     private byte[] mainClassBytes;
-    private List<byte[]> otherClasses = new ArrayList<>();
+    private List<byte[]> otherClassesBytes = new ArrayList<>();
     private List<String> callables = new ArrayList<>();
     private Map<String, byte[]> classMap = new HashMap<>();
 
     public static void main(String[] args) {
-        if(args.length != 1) {
+        if (args.length != 1) {
             System.out.println("Invalid parameters!");
             usage();
             System.exit(1);
@@ -43,14 +43,14 @@ public class ABICompiler {
         compiler.compile(fileInputStream);
 
         List<String> callables = compiler.getCallables();
-        for(String s : callables) System.out.println(s);
+        for (String s : callables) System.out.println(s);
 
         try {
             DataOutputStream dout = new DataOutputStream(new FileOutputStream("Main.class"));
             dout.write(compiler.getMainClassBytes());
             dout.close();
 
-            List<byte[]> otherClasses = compiler.getOtherClasses();
+            List<byte[]> otherClasses = compiler.getOtherClassesBytes();
             for (int i = 0; i < otherClasses.size(); i++) {
                 try {
                     dout = new DataOutputStream(new FileOutputStream("OtherClass" + i + ".class"));
@@ -72,7 +72,7 @@ public class ABICompiler {
     public void compile(InputStream byteReader) {
         try {
             safeLoadFromBytes(byteReader);
-        } catch (IOException | SizeException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         for (Map.Entry<String, byte[]> clazz : classMap.entrySet()) {
@@ -91,20 +91,12 @@ public class ABICompiler {
             if (clazz.getKey().equals(mainClassName)) {
                 mainClassBytes = classWriter.toByteArray();
             } else {
-                otherClasses.add(classWriter.toByteArray());
+                otherClassesBytes.add(classWriter.toByteArray());
             }
         }
     }
 
-    public byte[] getMainClassBytes() {
-        return mainClassBytes;
-    }
-
-    public List<String> getCallables() {
-        return callables;
-    }
-
-    private void safeLoadFromBytes(InputStream byteReader) throws IOException, SizeException {
+    private void safeLoadFromBytes(InputStream byteReader) throws Exception {
         classMap = new HashMap<>();
         mainClassName = null;
 
@@ -138,7 +130,7 @@ public class ABICompiler {
                     byte[] classBytes = new byte[readSize];
                     if (0 != jarReader.available()) {
                         // This entry is too big.
-                        throw new SizeException(name);
+                        throw new Exception("Class file too big: " + name);
                     }
                     System.arraycopy(tempReadingBuffer, 0, classBytes, 0, readSize);
                     classMap.put(qualifiedClassName, classBytes);
@@ -151,16 +143,22 @@ public class ABICompiler {
         return internalName.replaceAll("/", ".");
     }
 
-    public List<byte[]> getOtherClasses() {
-        return this.otherClasses;
+    public List<String> getCallables() {
+        return callables;
     }
 
-    private static class SizeException extends Exception {
+    public byte[] getMainClassBytes() {
+        return mainClassBytes;
+    }
 
-        private static final long serialVersionUID = 1L;
+    public List<byte[]> getOtherClassesBytes() {
+        return this.otherClassesBytes;
+    }
 
-        public SizeException(String entryName) {
-            super("Class file too big: " + entryName);
-        }
+    public List<byte[]> getAllClassesBytes() {
+        List<byte[]> l = new ArrayList<>();
+        l.add(mainClassBytes);
+        l.addAll(otherClassesBytes);
+        return l;
     }
 }

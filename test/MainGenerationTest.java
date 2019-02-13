@@ -2,6 +2,8 @@ import org.aion.avm.core.abicompiler.ABICompiler;
 import org.aion.avm.core.abicompiler.IllegalMainMethodsException;
 import org.junit.Before;
 import org.junit.Test;
+import resources.ChattyCalculator;
+import resources.Comparator;
 import resources.SimpleDApp;
 import resources.SimpleDAppNoMain;
 import resources.SimpleDAppNoMain1;
@@ -12,7 +14,6 @@ import java.io.DataOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
-
 
 public class MainGenerationTest {
 
@@ -28,7 +29,7 @@ public class MainGenerationTest {
         try {
             byte[] jar = JarBuilder.buildJarForMainAndClasses(SimpleDAppNoMain.class);
             compiler.compile(new ByteArrayInputStream(jar));
-            DataOutputStream dout= null;
+            DataOutputStream dout = null;
             try {
                 dout = new DataOutputStream(new FileOutputStream("Main.class"));
                 dout.write(compiler.getMainClassBytes());
@@ -43,7 +44,9 @@ public class MainGenerationTest {
     @Test
     public void testOtherClassesGeneration() {
         try {
-            byte[] jar = JarBuilder.buildJarForMainAndClasses(SimpleDAppNoMain.class, SimpleDAppNoMain1.class);
+            byte[] jar =
+                JarBuilder.buildJarForMainAndClasses(
+                    SimpleDAppNoMain.class, SimpleDAppNoMain1.class);
             compiler.compile(new ByteArrayInputStream(jar));
             List<byte[]> otherClasses = compiler.getOtherClasses();
             for (int i = 0; i < otherClasses.size(); i++) {
@@ -55,7 +58,7 @@ public class MainGenerationTest {
                     e.printStackTrace();
                 }
             }
-        } catch(Throwable e){
+        } catch (Throwable e) {
             e.printStackTrace();
         }
     }
@@ -64,5 +67,26 @@ public class MainGenerationTest {
     public void testGetAnnotationsMultipleMainMethod() {
         byte[] jar = JarBuilder.buildJarForMainAndClasses(SimpleDAppNoMain.class, SimpleDApp.class);
         compiler.compile(new ByteArrayInputStream(jar));
+    }
+
+    @Test
+    public void testImportedClass() {
+        try {
+            byte[] jar =
+                JarBuilder.buildJarForMainAndClasses(ChattyCalculator.class, Comparator.class);
+            compiler.compile(new ByteArrayInputStream(jar));
+            List<byte[]> otherClasses = compiler.getOtherClasses();
+            for (int i = 0; i < otherClasses.size(); i++) {
+                DataOutputStream dout = null;
+                try {
+                    dout = new DataOutputStream(new FileOutputStream("otherClass" + i + ".class"));
+                    dout.write(otherClasses.get(i));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
     }
 }

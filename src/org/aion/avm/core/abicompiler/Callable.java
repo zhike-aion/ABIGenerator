@@ -8,6 +8,4 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.CLASS)
 @Target({ElementType.METHOD})
 public @interface Callable {
-    String first();
-    String last();
 }

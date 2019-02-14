@@ -1,7 +1,9 @@
 package resources;
 
+import org.aion.abigenerator.Callable;
+
 public class Comparator {
-    @org.aion.avm.core.abicompiler.Callable()
+    @Callable()
     public static boolean greaterThan(int a, int b) {
         return a > b;
     }
@@ -10,7 +12,7 @@ public class Comparator {
         return a >= b;
     }
 
-    @org.aion.avm.core.abicompiler.Callable()
+    @Callable()
     public static boolean lesserThan(int a, int b) {
         return !(greaterThanEq(a, b));
     }

@@ -1,5 +1,5 @@
-import org.aion.avm.core.abicompiler.ABICompiler;
-import org.aion.avm.core.abicompiler.IllegalMainMethodsException;
+import org.aion.abigenerator.ABICompiler;
+import org.aion.abigenerator.IllegalMainMethodsException;
 import org.junit.Before;
 import org.junit.Test;
 import resources.ChattyCalculator;

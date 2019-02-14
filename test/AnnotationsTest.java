@@ -1,5 +1,5 @@
-import org.aion.avm.core.abicompiler.ABICompiler;
-import org.aion.avm.core.abicompiler.CallableMismatchException;
+import org.aion.abigenerator.ABICompiler;
+import org.aion.abigenerator.CallableMismatchException;
 import org.junit.Before;
 import org.junit.Test;
 import resources.SimpleDApp;

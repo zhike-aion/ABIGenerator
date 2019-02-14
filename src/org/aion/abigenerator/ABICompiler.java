@@ -1,4 +1,4 @@
-package org.aion.avm.core.abicompiler;
+package org.aion.abigenerator;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;

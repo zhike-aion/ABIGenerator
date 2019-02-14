@@ -1,8 +1,10 @@
 package resources;
 
+import org.aion.abigenerator.Callable;
+
 public class ChattyCalculator {
 
-    @org.aion.avm.core.abicompiler.Callable()
+    @Callable()
     public static void amIGreater(int a, int b) {
         if (Comparator.greaterThan(a, b)) {
             System.out.println("Yes, " + a + ", you are greater than " + b);

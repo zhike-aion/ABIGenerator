@@ -1,4 +1,4 @@
-package org.aion.avm.core.abicompiler;
+package org.aion.abigenerator;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

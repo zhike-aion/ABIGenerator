@@ -1,4 +1,4 @@
-import org.aion.avm.core.abicompiler.ABICompiler;
+import org.aion.abigenerator.ABICompiler;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

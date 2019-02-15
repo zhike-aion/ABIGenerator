@@ -21,7 +21,7 @@ public class ABICompiler {
     private byte[] mainClassBytes;
     private List<String> callables = new ArrayList<>();
     private Map<String, byte[]> inputClassMap = new HashMap<>();
-    private HashMap<String, byte[]> outputClassMap = new HashMap<>();
+    private Map<String, byte[]> outputClassMap = new HashMap<>();
 
     public static void main(String[] args) {
         if (args.length != 1) {
@@ -152,7 +152,7 @@ public class ABICompiler {
         return mainClassName;
     }
 
-    public HashMap<String, byte[]> getClassMap() {
+    public Map<String, byte[]> getClassMap() {
         return outputClassMap;
     }
 }

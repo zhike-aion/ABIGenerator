@@ -1,14 +1,13 @@
-import java.util.HashMap;
+import java.io.ByteArrayInputStream;
+import java.io.DataOutputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.Map;
 import org.aion.abigenerator.ABICompiler;
 import org.aion.abigenerator.IllegalMainMethodsException;
 import org.aion.avm.core.dappreading.JarBuilder;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.io.ByteArrayInputStream;
-import java.io.DataOutputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
 
 public class MainGenerationTest {
 
@@ -49,7 +48,7 @@ public class MainGenerationTest {
             dout.write(compiler.getMainClassBytes());
             dout.close();
 
-            for (HashMap.Entry<String, byte[]> entry : compiler.getClassMap().entrySet()) {
+            for (Map.Entry<String, byte[]> entry : compiler.getClassMap().entrySet()) {
                 dout = new DataOutputStream(new FileOutputStream(entry.getKey() + ".class"));
                 dout.write(entry.getValue());
                 dout.close();
@@ -78,7 +77,7 @@ public class MainGenerationTest {
             dout.write(compiler.getMainClassBytes());
             dout.close();
 
-            for (HashMap.Entry<String, byte[]> entry : compiler.getClassMap().entrySet()) {
+            for (Map.Entry<String, byte[]> entry : compiler.getClassMap().entrySet()) {
                 dout = new DataOutputStream(new FileOutputStream(entry.getKey() + ".class"));
                 dout.write(entry.getValue());
                 dout.close();

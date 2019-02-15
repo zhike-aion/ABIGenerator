@@ -1,4 +1,4 @@
-package org.aion.avm.core.abicompiler;
+package org.aion.abigenerator;
 
 public class CallableMismatchException extends RuntimeException {
     public CallableMismatchException(String message) {

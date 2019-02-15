@@ -1,4 +1,4 @@
-package org.aion.avm.core.abicompiler;
+package org.aion.abigenerator;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
@@ -19,9 +19,9 @@ public class ABICompiler {
 
     private String mainClassName;
     private byte[] mainClassBytes;
-    private List<byte[]> otherClassesBytes = new ArrayList<>();
     private List<String> callables = new ArrayList<>();
-    private Map<String, byte[]> classMap = new HashMap<>();
+    private Map<String, byte[]> inputClassMap = new HashMap<>();
+    private HashMap<String, byte[]> outputClassMap = new HashMap<>();
 
     public static void main(String[] args) {
         if (args.length != 1) {
@@ -46,19 +46,16 @@ public class ABICompiler {
         for (String s : callables) System.out.println(s);
 
         try {
-            DataOutputStream dout = new DataOutputStream(new FileOutputStream("Main.class"));
+            DataOutputStream dout =
+                    new DataOutputStream(
+                            new FileOutputStream(compiler.getMainClassName() + ".class"));
             dout.write(compiler.getMainClassBytes());
             dout.close();
 
-            List<byte[]> otherClasses = compiler.getOtherClassesBytes();
-            for (int i = 0; i < otherClasses.size(); i++) {
-                try {
-                    dout = new DataOutputStream(new FileOutputStream("OtherClass" + i + ".class"));
-                    dout.write(otherClasses.get(i));
-                    dout.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+            for (HashMap.Entry<String, byte[]> entry : compiler.outputClassMap.entrySet()) {
+                dout = new DataOutputStream(new FileOutputStream(entry.getKey() + ".class"));
+                dout.write(entry.getValue());
+                dout.close();
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -75,7 +72,7 @@ public class ABICompiler {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        for (Map.Entry<String, byte[]> clazz : classMap.entrySet()) {
+        for (Map.Entry<String, byte[]> clazz : inputClassMap.entrySet()) {
             ClassReader reader = new ClassReader(clazz.getValue());
             ClassWriter classWriter = new ClassWriter(0);
             ABICompilerClassVisitor classVisitor = new ABICompilerClassVisitor(classWriter) {};
@@ -91,13 +88,13 @@ public class ABICompiler {
             if (clazz.getKey().equals(mainClassName)) {
                 mainClassBytes = classWriter.toByteArray();
             } else {
-                otherClassesBytes.add(classWriter.toByteArray());
+                outputClassMap.put(clazz.getKey(), classWriter.toByteArray());
             }
         }
     }
 
     private void safeLoadFromBytes(InputStream byteReader) throws Exception {
-        classMap = new HashMap<>();
+        inputClassMap = new HashMap<>();
         mainClassName = null;
 
         try (JarInputStream jarReader = new JarInputStream(byteReader, true)) {
@@ -133,7 +130,7 @@ public class ABICompiler {
                         throw new Exception("Class file too big: " + name);
                     }
                     System.arraycopy(tempReadingBuffer, 0, classBytes, 0, readSize);
-                    classMap.put(qualifiedClassName, classBytes);
+                    inputClassMap.put(qualifiedClassName, classBytes);
                 }
             }
         }
@@ -151,14 +148,11 @@ public class ABICompiler {
         return mainClassBytes;
     }
 
-    public List<byte[]> getOtherClassesBytes() {
-        return this.otherClassesBytes;
+    public String getMainClassName() {
+        return mainClassName;
     }
 
-    public List<byte[]> getAllClassesBytes() {
-        List<byte[]> l = new ArrayList<>();
-        l.add(mainClassBytes);
-        l.addAll(otherClassesBytes);
-        return l;
+    public HashMap<String, byte[]> getClassMap() {
+        return outputClassMap;
     }
 }

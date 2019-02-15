@@ -25,9 +25,7 @@ public class MainTest {
     public void testMain() {
 
         ABICompiler.main(new String[]{System.getProperty("user.dir") + "/test/dapp.jar"});
-        assertEquals("DumbCalculator: public static boolean greaterThan(int, int)\n" +
-                "DumbCalculator: public static boolean lesserThan(int, int)\n" +
-                "ChattyCalculator: public static java.lang.String amIGreater(int, int)\n",
+        assertEquals("ChattyCalculator: public static java.lang.String amIGreater(int, int)\n",
                 outContent.toString());
     }
 }

@@ -56,10 +56,8 @@ public class AnnotationsTest {
         } catch (Throwable e) {
             e.printStackTrace();
         }
-        assertEquals(4, callables.size());
+        assertEquals(2, callables.size());
         assertTrue(callables.get(0).indexOf("test1") > 0);
         assertTrue(callables.get(1).indexOf("test2") > 0);
-        assertTrue(callables.get(2).indexOf("test1") > 0);
-        assertTrue(callables.get(3).indexOf("test2") > 0);
     }
 }

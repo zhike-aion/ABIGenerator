@@ -46,7 +46,9 @@ public class ABICompilerClassVisitor extends ClassVisitor {
         }
         ABICompilerMethodVisitor mv = new ABICompilerMethodVisitor(access, name, descriptor,
                 super.visitMethod(access, name, descriptor, signature, exceptions));
-        methodVisitors.add(mv);
+        if (isMain) {
+            methodVisitors.add(mv);
+        }
         return mv;
     }
 

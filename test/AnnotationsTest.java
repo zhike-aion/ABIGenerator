@@ -1,11 +1,8 @@
 import org.aion.abigenerator.ABICompiler;
 import org.aion.abigenerator.CallableMismatchException;
+import org.aion.avm.core.dappreading.JarBuilder;
 import org.junit.Before;
 import org.junit.Test;
-import resources.SimpleDApp;
-import resources.SimpleDAppNoMain;
-import resources.SimpleDAppWrongCallable;
-import util.JarBuilder;
 
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;

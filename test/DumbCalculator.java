@@ -1,8 +1,6 @@
-package resources;
-
 import org.aion.abigenerator.Callable;
 
-public class Comparator {
+public class DumbCalculator {
     @Callable()
     public static boolean greaterThan(int a, int b) {
         return a > b;

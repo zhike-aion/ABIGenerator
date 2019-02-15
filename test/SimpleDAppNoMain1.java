@@ -1,8 +1,6 @@
-package resources;
-
 import org.aion.abigenerator.Callable;
 
-public class SimpleDAppNoMain {
+public class SimpleDAppNoMain1 {
 
     @Callable()
     public static boolean test1(boolean b) {
@@ -19,4 +17,3 @@ public class SimpleDAppNoMain {
         return true;
     }
 }
-

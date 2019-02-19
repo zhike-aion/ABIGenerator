@@ -54,4 +54,12 @@ public class ABICompilerMethodVisitor extends MethodVisitor {
         }
         return super.visitAnnotation(descriptor, visible);
     }
+
+    public String getMethodName() {
+        return methodName;
+    }
+
+    public String getDescriptor() {
+        return methodDescriptor;
+    }
 }

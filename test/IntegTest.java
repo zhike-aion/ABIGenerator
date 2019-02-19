@@ -2,6 +2,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
+import java.io.DataOutputStream;
+import java.io.FileOutputStream;
 import java.math.BigInteger;
 import org.aion.abigenerator.ABICompiler;
 import org.aion.avm.api.ABIDecoder;
@@ -90,5 +92,26 @@ public class IntegTest {
         assertEquals("No, 3, you are NOT greater than 4", ret);
         ret = (String) callStatic(dapp, "amIGreater", 5, 4);
         assertEquals("Yes, 5, you are greater than 4", ret);
+    }
+
+    @Test
+    public void testGenerateMainAndCallMethod() {
+
+        byte[] jar = JarBuilder.buildJarForMainAndClasses(HelloWorldNoMain.class);
+        compiler.compile(new ByteArrayInputStream(jar));
+        Address dapp = installTestDApp();
+
+        String ret = (String) callStatic(dapp, "returnHelloWorld");
+        assertEquals("Hello world", ret);
+
+/*        DataOutputStream dout = null;
+        try {
+            dout = new DataOutputStream(
+                    new FileOutputStream(compiler.getMainClassName() + ".class"));
+            dout.write(compiler.getMainClassBytes());
+            dout.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }*/
     }
 }

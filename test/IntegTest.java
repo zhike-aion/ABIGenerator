@@ -17,6 +17,7 @@ import org.junit.Rule;
 import org.junit.Test;
 
 public class IntegTest {
+
     @Rule public AvmRule avmRule = new AvmRule(true);
 
     private static ABICompiler compiler;
@@ -27,31 +28,6 @@ public class IntegTest {
     @Before
     public void setup() {
         compiler = new ABICompiler();
-    }
-
-    @Test
-    public void testSimpleDAppNoMain() {
-
-        byte[] jar = JarBuilder.buildJarForMainAndClasses(SimpleDAppNoMain.class);
-        compiler.compile(new ByteArrayInputStream(jar));
-        Address dapp = installTestDApp();
-
-        boolean ret = (Boolean) callStatic(dapp, "test1", true);
-        assertTrue(ret);
-    }
-
-    @Test
-    public void testChattyCalculator() {
-
-        byte[] jar =
-                JarBuilder.buildJarForMainAndClasses(ChattyCalculator.class, DumbCalculator.class);
-        compiler.compile(new ByteArrayInputStream(jar));
-        Address dapp = installTestDApp();
-
-        String ret = (String) callStatic(dapp, "amIGreater", 3, 4);
-        assertEquals("No, 3, you are NOT greater than 4", ret);
-        ret = (String) callStatic(dapp, "amIGreater", 5, 4);
-        assertEquals("Yes, 5, you are greater than 4", ret);
     }
 
     private Address installTestDApp() {
@@ -89,5 +65,30 @@ public class IntegTest {
                         .getTransactionResult();
         assertEquals(AvmTransactionResult.Code.SUCCESS, result.getResultCode());
         return ABIDecoder.decodeOneObject(result.getReturnData());
+    }
+
+    @Test
+    public void testSimpleDAppNoMain() {
+
+        byte[] jar = JarBuilder.buildJarForMainAndClasses(SimpleDAppNoMain.class);
+        compiler.compile(new ByteArrayInputStream(jar));
+        Address dapp = installTestDApp();
+
+        boolean ret = (Boolean) callStatic(dapp, "test1", true);
+        assertTrue(ret);
+    }
+
+    @Test
+    public void testChattyCalculator() {
+
+        byte[] jar =
+                JarBuilder.buildJarForMainAndClasses(ChattyCalculator.class, DumbCalculator.class);
+        compiler.compile(new ByteArrayInputStream(jar));
+        Address dapp = installTestDApp();
+
+        String ret = (String) callStatic(dapp, "amIGreater", 3, 4);
+        assertEquals("No, 3, you are NOT greater than 4", ret);
+        ret = (String) callStatic(dapp, "amIGreater", 5, 4);
+        assertEquals("Yes, 5, you are greater than 4", ret);
     }
 }

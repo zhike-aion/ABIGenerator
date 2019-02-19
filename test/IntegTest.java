@@ -104,6 +104,9 @@ public class IntegTest {
         String ret = (String) callStatic(dapp, "returnHelloWorld");
         assertEquals("Hello world", ret);
 
+        ret = (String) callStatic(dapp, "returnGoodbyeWorld");
+        assertEquals("Goodbye world", ret);
+
 /*        DataOutputStream dout = null;
         try {
             dout = new DataOutputStream(

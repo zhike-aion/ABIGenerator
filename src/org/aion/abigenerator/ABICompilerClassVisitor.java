@@ -62,51 +62,59 @@ public class ABICompilerClassVisitor extends ClassVisitor {
     @Override
     public void visitEnd() {
         if (isMain && !hasMain) {
+
+            // write function signature
             MethodVisitor methodVisitor =
                     super.visitMethod(ACC_PUBLIC | ACC_STATIC, "main", "()[B", null, null);
             methodVisitor.visitCode();
-            Label label0 = new Label();
-            methodVisitor.visitLabel(label0);
+
+            // set inputBytes = BlockchainRuntime.getData();
             methodVisitor.visitMethodInsn(INVOKESTATIC, "org/aion/avm/api/BlockchainRuntime", "getData", "()[B", false);
             methodVisitor.visitVarInsn(ASTORE, 0);
             Label label1 = new Label();
             methodVisitor.visitLabel(label1);
+
+            // set methodName = ABIDecoder.decodeMethodName(inputBytes);
             methodVisitor.visitVarInsn(ALOAD, 0);
             methodVisitor.visitMethodInsn(INVOKESTATIC, "org/aion/avm/api/ABIDecoder", "decodeMethodName", "([B)Ljava/lang/String;", false);
             methodVisitor.visitVarInsn(ASTORE, 1);
             Label label2 = new Label();
             methodVisitor.visitLabel(label2);
+
+            // set argValues = ABIDecoder.decodeArguments(BlockchainRuntime.getData());
             methodVisitor.visitMethodInsn(INVOKESTATIC, "org/aion/avm/api/BlockchainRuntime", "getData", "()[B", false);
             methodVisitor.visitMethodInsn(INVOKESTATIC, "org/aion/avm/api/ABIDecoder", "decodeArguments", "([B)[Ljava/lang/Object;", false);
             methodVisitor.visitVarInsn(ASTORE, 2);
 
-//            for (String callableMethod : this.getCallables()) {
-//
-//            }
+            Label latestLabel = new Label();
+            Label firstLabel = latestLabel;
 
-            ABICompilerMethodVisitor callableMethod = this.getCallableMethodVisitors().get(0);
+            for (ABICompilerMethodVisitor callableMethod : this.getCallableMethodVisitors()) {
 
-            Label label3 = new Label();
-            methodVisitor.visitLabel(label3);
-            methodVisitor.visitVarInsn(ALOAD, 1);
-            methodVisitor.visitLdcInsn(callableMethod.getMethodName());
-            methodVisitor.visitMethodInsn(INVOKEVIRTUAL, "java/lang/String", "equals", "(Ljava/lang/Object;)Z", false);
-            Label label4 = new Label();
-            methodVisitor.visitJumpInsn(IFEQ, label4);
-            Label label5 = new Label();
-            methodVisitor.visitLabel(label5);
-            methodVisitor.visitMethodInsn(INVOKESTATIC, className, callableMethod.getMethodName(), callableMethod.getDescriptor(), false);
-            methodVisitor.visitMethodInsn(INVOKESTATIC, "org/aion/avm/api/ABIEncoder", "encodeOneObject", "(Ljava/lang/Object;)[B", false);
-            methodVisitor.visitInsn(ARETURN);
-            methodVisitor.visitLabel(label4);
+                // latestLabel is the goto label of the preceding if condition
+                methodVisitor.visitLabel(latestLabel);
+                methodVisitor.visitVarInsn(ALOAD, 1);
+                methodVisitor.visitLdcInsn(callableMethod.getMethodName());
+                methodVisitor.visitMethodInsn(INVOKEVIRTUAL, "java/lang/String", "equals", "(Ljava/lang/Object;)Z", false);
+                latestLabel = new Label();
+                methodVisitor.visitJumpInsn(IFEQ, latestLabel);
+
+                // return ABIEncoder.encodeOneObject(<methodName>());
+                methodVisitor.visitMethodInsn(INVOKESTATIC, className, callableMethod.getMethodName(), callableMethod.getDescriptor(), false);
+                methodVisitor.visitMethodInsn(INVOKESTATIC, "org/aion/avm/api/ABIEncoder", "encodeOneObject", "(Ljava/lang/Object;)[B", false);
+                methodVisitor.visitInsn(ARETURN);
+            }
+
+            // this latestLabel is the catch-all else, we just return null
+            methodVisitor.visitLabel(latestLabel);
             methodVisitor.visitFrame(Opcodes.F_APPEND, 3, new Object[]{"[B", "java/lang/String", "[Ljava/lang/Object;"}, 0, null);
             methodVisitor.visitInsn(ACONST_NULL);
             methodVisitor.visitInsn(ARETURN);
-            Label label6 = new Label();
-            methodVisitor.visitLabel(label6);
-            methodVisitor.visitLocalVariable("inputBytes", "[B", null, label1, label6, 0);
-            methodVisitor.visitLocalVariable("methodName", "Ljava/lang/String;", null, label2, label6, 1);
-            methodVisitor.visitLocalVariable("argValues", "[Ljava/lang/Object;", null, label3, label6, 2);
+            Label lastLabel = new Label();
+            methodVisitor.visitLabel(lastLabel);
+            methodVisitor.visitLocalVariable("inputBytes", "[B", null, label1, lastLabel, 0);
+            methodVisitor.visitLocalVariable("methodName", "Ljava/lang/String;", null, label2, lastLabel, 1);
+            methodVisitor.visitLocalVariable("argValues", "[Ljava/lang/Object;", null, firstLabel, lastLabel, 2);
             methodVisitor.visitMaxs(2, 3);
             methodVisitor.visitEnd();
         }

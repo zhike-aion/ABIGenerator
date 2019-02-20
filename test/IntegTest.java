@@ -5,6 +5,7 @@ import java.io.ByteArrayInputStream;
 import java.io.DataOutputStream;
 import java.io.FileOutputStream;
 import java.math.BigInteger;
+
 import org.aion.abigenerator.ABICompiler;
 import org.aion.avm.api.ABIDecoder;
 import org.aion.avm.api.ABIEncoder;
@@ -20,7 +21,8 @@ import org.junit.Test;
 
 public class IntegTest {
 
-    @Rule public AvmRule avmRule = new AvmRule(true);
+    @Rule
+    public AvmRule avmRule = new AvmRule(true);
 
     private static ABICompiler compiler;
 
@@ -44,11 +46,11 @@ public class IntegTest {
         // Deploy.
         TransactionResult createResult =
                 avmRule.deploy(
-                                avmRule.getPreminedAccount(),
-                                BigInteger.ZERO,
-                                txData,
-                                ENERGY_LIMIT,
-                                ENERGY_PRICE)
+                        avmRule.getPreminedAccount(),
+                        BigInteger.ZERO,
+                        txData,
+                        ENERGY_LIMIT,
+                        ENERGY_PRICE)
                         .getTransactionResult();
         assertEquals(AvmTransactionResult.Code.SUCCESS, createResult.getResultCode());
         return new Address(createResult.getReturnData());
@@ -58,12 +60,12 @@ public class IntegTest {
         byte[] argData = ABIEncoder.encodeMethodArguments(methodName, arguments);
         TransactionResult result =
                 avmRule.call(
-                                avmRule.getPreminedAccount(),
-                                dapp,
-                                BigInteger.ZERO,
-                                argData,
-                                ENERGY_LIMIT,
-                                ENERGY_PRICE)
+                        avmRule.getPreminedAccount(),
+                        dapp,
+                        BigInteger.ZERO,
+                        argData,
+                        ENERGY_LIMIT,
+                        ENERGY_PRICE)
                         .getTransactionResult();
         assertEquals(AvmTransactionResult.Code.SUCCESS, result.getResultCode());
         return ABIDecoder.decodeOneObject(result.getReturnData());
@@ -77,6 +79,9 @@ public class IntegTest {
         Address dapp = installTestDApp();
 
         boolean ret = (Boolean) callStatic(dapp, "test1", true);
+        assertTrue(ret);
+
+        ret = (Boolean) callStatic(dapp, "test2", 1, "test2", new long[]{1, 2, 3});
         assertTrue(ret);
     }
 

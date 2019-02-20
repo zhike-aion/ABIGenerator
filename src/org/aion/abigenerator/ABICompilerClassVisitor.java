@@ -171,6 +171,7 @@ public class ABICompilerClassVisitor extends ClassVisitor {
                 mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Float", "floatValue", "()F", false);
                 break;
             case Type.OBJECT:
+            case Type.ARRAY:
                 mv.visitTypeInsn(CHECKCAST, t.getInternalName());
                 break;
             //TODO: Arrays!

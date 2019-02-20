@@ -108,7 +108,7 @@ public class ABICompilerClassVisitor extends ClassVisitor {
                     methodVisitor.visitVarInsn(ALOAD, 2);
                     methodVisitor.visitIntInsn(BIPUSH, i);
                     methodVisitor.visitInsn(AALOAD);
-                    methodVisitor.visitTypeInsn(CHECKCAST, argTypes[i].getInternalName());
+                    castArgumentType(methodVisitor, argTypes[i]);
                 }
 
                 methodVisitor.visitMethodInsn(INVOKESTATIC, className, callableMethod.getMethodName(), callableMethod.getDescriptor(), false);
@@ -133,5 +133,46 @@ public class ABICompilerClassVisitor extends ClassVisitor {
             throw new IllegalMainMethodsException("Non-main class can't have main() method!");
         }
         super.visitEnd();
+    }
+
+    private void castArgumentType(MethodVisitor mv, Type t) {
+        switch (t.getSort()) {
+            case Type.BOOLEAN:
+                mv.visitTypeInsn(CHECKCAST, "java/lang/Boolean");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false);
+                break;
+            case Type.INT:
+                mv.visitTypeInsn(CHECKCAST, "java/lang/Integer");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Integer", "intValue", "()Z", false);
+                break;
+            case Type.BYTE:
+                mv.visitTypeInsn(CHECKCAST, "java/lang/Byte");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Byte", "intValue", "()Z", false);
+                break;
+            case Type.CHAR:
+                mv.visitTypeInsn(CHECKCAST, "java/lang/Character");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Character", "charValue", "()Z", false);
+                break;
+            case Type.SHORT:
+                mv.visitTypeInsn(CHECKCAST, "java/lang/Short");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Short", "shortValue", "()Z", false);
+                break;
+            case Type.LONG:
+                mv.visitTypeInsn(CHECKCAST, "java/lang/Long");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Long", "longValue", "()Z", false);
+                break;
+            case Type.DOUBLE:
+                mv.visitTypeInsn(CHECKCAST, "java/lang/Double");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Double", "doubleValue", "()Z", false);
+                break;
+            case Type.FLOAT:
+                mv.visitTypeInsn(CHECKCAST, "java/lang/Float");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Float", "floatValue", "()Z", false);
+                break;
+            case Type.OBJECT:
+                mv.visitTypeInsn(CHECKCAST, t.getInternalName());
+                break;
+                //TODO: Arrays!
+        }
     }
 }

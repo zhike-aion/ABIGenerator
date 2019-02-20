@@ -24,7 +24,9 @@ public class ABICompilerClassVisitor extends ClassVisitor {
     public List<String> getCallables() {
         List<String> signatures = new ArrayList<>();
         for (ABICompilerMethodVisitor mv : methodVisitors) {
-            signatures.add(this.className + ": " + mv.getSignature());
+            if (mv.isCallable()) {
+                signatures.add(this.className + ": " + mv.getSignature());
+            }
         }
         return signatures;
     }

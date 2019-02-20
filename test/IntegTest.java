@@ -99,15 +99,8 @@ public class IntegTest {
 
         byte[] jar = JarBuilder.buildJarForMainAndClasses(HelloWorldNoMain.class);
         compiler.compile(new ByteArrayInputStream(jar));
-        Address dapp = installTestDApp();
 
-        String ret = (String) callStatic(dapp, "returnHelloWorld");
-        assertEquals("Hello world", ret);
-
-        ret = (String) callStatic(dapp, "returnGoodbyeWorld");
-        assertEquals("Goodbye world", ret);
-
-/*        DataOutputStream dout = null;
+/*               DataOutputStream dout = null;
         try {
             dout = new DataOutputStream(
                     new FileOutputStream(compiler.getMainClassName() + ".class"));
@@ -116,5 +109,23 @@ public class IntegTest {
         } catch (Exception e) {
             e.printStackTrace();
         }*/
+
+        Address dapp = installTestDApp();
+
+        String ret = (String) callStatic(dapp, "returnHelloWorld");
+        assertEquals("Hello world", ret);
+
+        ret = (String) callStatic(dapp, "returnGoodbyeWorld");
+        assertEquals("Goodbye world", ret);
+
+        ret = (String) callStatic(dapp, "returnEcho", "Code meets world");
+        assertEquals("Code meets world", ret);
+
+        ret = (String) callStatic(dapp, "returnAppended", "alpha", "bet");
+        assertEquals("alphabet", ret);
+
+        ret = (String) callStatic(dapp, "returnAppendedMultiTypes", "alpha", "bet", false, 123);
+        assertEquals("alphabetfalse123", ret);
+
     }
 }

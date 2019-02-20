@@ -100,6 +100,15 @@ public class ABICompilerClassVisitor extends ClassVisitor {
                 methodVisitor.visitJumpInsn(IFEQ, latestLabel);
 
                 // return ABIEncoder.encodeOneObject(<methodName>());
+                Type[] argTypes = Type.getArgumentTypes(callableMethod.getDescriptor());
+
+                for (int i = 0; i < argTypes.length; i++) {
+                    methodVisitor.visitVarInsn(ALOAD, 2);
+                    methodVisitor.visitIntInsn(BIPUSH, i);
+                    methodVisitor.visitInsn(AALOAD);
+                    methodVisitor.visitTypeInsn(CHECKCAST, argTypes[i].getInternalName());
+                }
+
                 methodVisitor.visitMethodInsn(INVOKESTATIC, className, callableMethod.getMethodName(), callableMethod.getDescriptor(), false);
                 methodVisitor.visitMethodInsn(INVOKESTATIC, "org/aion/avm/api/ABIEncoder", "encodeOneObject", "(Ljava/lang/Object;)[B", false);
                 methodVisitor.visitInsn(ARETURN);

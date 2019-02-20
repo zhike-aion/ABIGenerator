@@ -174,7 +174,6 @@ public class ABICompilerClassVisitor extends ClassVisitor {
             case Type.ARRAY:
                 mv.visitTypeInsn(CHECKCAST, t.getInternalName());
                 break;
-            //TODO: Arrays!
         }
     }
 
@@ -205,8 +204,8 @@ public class ABICompilerClassVisitor extends ClassVisitor {
                 mv.visitMethodInsn(INVOKESTATIC, "java/lang/Float", "valueOf", "(F)Ljava/lang/Float;", false);
                 break;
             case Type.OBJECT:
+            case Type.ARRAY:
                 break;
-            //TODO: Arrays!
         }
     }
 }

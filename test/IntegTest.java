@@ -5,6 +5,7 @@ import java.io.ByteArrayInputStream;
 import java.io.DataOutputStream;
 import java.io.FileOutputStream;
 import java.math.BigInteger;
+import java.util.Arrays;
 
 import org.aion.abigenerator.ABICompiler;
 import org.aion.avm.api.ABIDecoder;
@@ -132,5 +133,10 @@ public class IntegTest {
         ret = (String) callStatic(dapp, "returnAppendedMultiTypes", "alpha", "bet", false, 123);
         assertEquals("alphabetfalse123", ret);
 
+        int[] intArray = (int[]) callStatic(dapp, "returnArrayOfInt", 1, 2, 3);
+        assertTrue(Arrays.equals(new int[]{1, 2, 3}, intArray));
+
+        String[] strArray = (String[]) callStatic(dapp, "returnArrayOfString", "hello", "world", "!");
+        assertTrue(Arrays.equals(new String[]{"hello", "world", "!"}, strArray));
     }
 }

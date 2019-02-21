@@ -13,12 +13,17 @@ public class SimpleDApp {
     }
 
     @Callable()
-    public boolean test2(int i, String s, long[] l) {
+    public static boolean test2(int i, String s, long[] l) {
         return true;
     }
 
     @Deprecated
     public static boolean test3(int i, String s, long[] l) {
+        return true;
+    }
+
+    @Callable()
+    public boolean test4(int i, String s, long[] l) {
         return true;
     }
 }

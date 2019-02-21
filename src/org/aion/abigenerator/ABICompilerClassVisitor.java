@@ -173,6 +173,7 @@ public class ABICompilerClassVisitor extends ClassVisitor {
                 break;
             case Type.OBJECT:
             case Type.ARRAY:
+                System.out.println(t.getInternalName());
                 mv.visitTypeInsn(CHECKCAST, t.getInternalName());
                 break;
         }

@@ -101,7 +101,7 @@ public class ABICompilerClassVisitor extends ClassVisitor {
                 latestLabel = new Label();
                 methodVisitor.visitJumpInsn(IFEQ, latestLabel);
 
-                // return ABIEncoder.encodeOneObject(<methodName>());
+                // load the various arguments as indicated by the function signature, casting them as needed
                 Type[] argTypes = Type.getArgumentTypes(callableMethod.getDescriptor());
 
                 for (int i = 0; i < argTypes.length; i++) {
@@ -111,6 +111,7 @@ public class ABICompilerClassVisitor extends ClassVisitor {
                     castArgumentType(methodVisitor, argTypes[i]);
                 }
 
+                // return ABIEncoder.encodeOneObject(<methodName>(<arguments>));
                 methodVisitor.visitMethodInsn(INVOKESTATIC, className, callableMethod.getMethodName(), callableMethod.getDescriptor(), false);
                 castReturnType(methodVisitor, Type.getReturnType(callableMethod.getDescriptor()));
                 methodVisitor.visitMethodInsn(INVOKESTATIC, "org/aion/avm/api/ABIEncoder", "encodeOneObject", "(Ljava/lang/Object;)[B", false);
@@ -172,6 +173,7 @@ public class ABICompilerClassVisitor extends ClassVisitor {
                 break;
             case Type.OBJECT:
             case Type.ARRAY:
+                System.out.println(t.getInternalName());
                 mv.visitTypeInsn(CHECKCAST, t.getInternalName());
                 break;
         }

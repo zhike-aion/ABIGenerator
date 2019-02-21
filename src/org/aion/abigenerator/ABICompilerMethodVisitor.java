@@ -52,7 +52,7 @@ public class ABICompilerMethodVisitor extends MethodVisitor {
         if (isPublic && isStatic && Type.getType(descriptor).getClassName().equals(Callable.class.getName())) {
             callable = true;
         }
-        return super.visitAnnotation(descriptor, visible);
+        return null;
     }
 
     public String getMethodName() {

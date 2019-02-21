@@ -34,8 +34,8 @@ public class AnnotationsTest {
             e.printStackTrace();
         }
         assertEquals(2, callables.size());
-        assertTrue(callables.get(0).indexOf("test1") > 0);
-        assertTrue(callables.get(1).indexOf("test2") > 0);
+        assertTrue(callables.get(0).equals("SimpleDApp: public static boolean test1(boolean)"));
+        assertTrue(callables.get(1).equals("SimpleDApp: public static boolean test2(int, java.lang.String, long[])"));
     }
 
     @Test(expected = CallableMismatchException.class)

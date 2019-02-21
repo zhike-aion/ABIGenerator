@@ -46,13 +46,18 @@ public class ABICompilerMethodVisitor extends MethodVisitor {
     public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
         boolean isPublic = (this.access & Opcodes.ACC_PUBLIC) != 0;
         boolean isStatic = (this.access & Opcodes.ACC_STATIC) != 0;
-        if (!isPublic && !isStatic && Type.getType(descriptor).getClassName().equals(Callable.class.getName())) {
-            throw new CallableMismatchException("Annotation 'Callable' mismatches non-public && non-static access modifiers(protected/private)!");
-        }
-        if (isPublic && isStatic && Type.getType(descriptor).getClassName().equals(Callable.class.getName())) {
+        if(Type.getType(descriptor).getClassName().equals(Callable.class.getName()) ) {
+            if (!isPublic) {
+                throw new CallableMismatchNonPublicException("Annotation 'Callable' mismatches non-public access modifiers(protected/private)!");
+            }
+            if (!isStatic) {
+                throw new CallableMismatchNonStaticException("Annotation 'Callable' mismatches non-static access modifiers!");
+            }
             callable = true;
+            return null;
+        } else {
+            return super.visitAnnotation(descriptor, visible);
         }
-        return null;
     }
 
     public String getMethodName() {

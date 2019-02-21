@@ -1,5 +1,6 @@
 import org.aion.abigenerator.ABICompiler;
-import org.aion.abigenerator.CallableMismatchException;
+import org.aion.abigenerator.CallableMismatchNonPublicException;
+import org.aion.abigenerator.CallableMismatchNonStaticException;
 import org.aion.avm.core.dappreading.JarBuilder;
 import org.junit.Before;
 import org.junit.Test;
@@ -38,9 +39,15 @@ public class AnnotationsTest {
         assertTrue(callables.get(1).equals("SimpleDApp: public static boolean test2(int, java.lang.String, long[])"));
     }
 
-    @Test(expected = CallableMismatchException.class)
-    public void testGetAnnotationsWrongCallable() {
+    @Test(expected = CallableMismatchNonPublicException.class)
+    public void testGetAnnotationsWrongCallableForNonPublic() {
         byte[] jar = JarBuilder.buildJarForMainAndClasses(SimpleDAppWrongCallable.class);
+        compiler.compile(new ByteArrayInputStream(jar));
+    }
+
+    @Test(expected = CallableMismatchNonStaticException.class)
+    public void testGetAnnotationsWrongCallableForNonStatic() {
+        byte[] jar = JarBuilder.buildJarForMainAndClasses(SimpleDAppWrongCallable1.class);
         compiler.compile(new ByteArrayInputStream(jar));
     }
 

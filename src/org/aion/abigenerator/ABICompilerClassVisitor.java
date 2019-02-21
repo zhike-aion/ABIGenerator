@@ -25,11 +25,20 @@ public class ABICompilerClassVisitor extends ClassVisitor {
         List<String> signatures = new ArrayList<>();
         for (ABICompilerMethodVisitor mv : methodVisitors) {
             if (mv.isCallable()) {
-
                 signatures.add(this.className + ": " + mv.getSignature());
             }
         }
         return signatures;
+    }
+
+    public List<ABICompilerMethodVisitor> getCallableMethodVisitors() {
+        List<ABICompilerMethodVisitor> callableMethodVisitors = new ArrayList<>();
+        for (ABICompilerMethodVisitor mv : methodVisitors) {
+            if (mv.isCallable()) {
+                callableMethodVisitors.add(mv);
+            }
+        }
+        return callableMethodVisitors;
     }
 
     @Override
@@ -55,29 +64,150 @@ public class ABICompilerClassVisitor extends ClassVisitor {
     @Override
     public void visitEnd() {
         if (isMain && !hasMain) {
+
+            // write function signature
             MethodVisitor methodVisitor =
                     super.visitMethod(ACC_PUBLIC | ACC_STATIC, "main", "()[B", null, null);
             methodVisitor.visitCode();
-            Label label0 = new Label();
-            methodVisitor.visitLabel(label0);
-            methodVisitor.visitLineNumber(8, label0);
-            methodVisitor.visitLdcInsn(
-                    Type.getType("L" + this.className.replaceAll("/", ".") + ";"));
-            methodVisitor.visitMethodInsn(
-                    INVOKESTATIC, "org/aion/avm/api/BlockchainRuntime", "getData", "()[B", false);
-            methodVisitor.visitMethodInsn(
-                    INVOKESTATIC,
-                    "org/aion/avm/api/ABIDecoder",
-                    "decodeAndRunWithClass",
-                    "(Ljava/lang/Class;[B)[B",
-                    false);
+
+            // set inputBytes = BlockchainRuntime.getData();
+            methodVisitor.visitMethodInsn(INVOKESTATIC, "org/aion/avm/api/BlockchainRuntime", "getData", "()[B", false);
+            methodVisitor.visitVarInsn(ASTORE, 0);
+            Label label1 = new Label();
+            methodVisitor.visitLabel(label1);
+
+            // set methodName = ABIDecoder.decodeMethodName(inputBytes);
+            methodVisitor.visitVarInsn(ALOAD, 0);
+            methodVisitor.visitMethodInsn(INVOKESTATIC, "org/aion/avm/api/ABIDecoder", "decodeMethodName", "([B)Ljava/lang/String;", false);
+            methodVisitor.visitVarInsn(ASTORE, 1);
+            Label label2 = new Label();
+            methodVisitor.visitLabel(label2);
+
+            // set argValues = ABIDecoder.decodeArguments(BlockchainRuntime.getData());
+            methodVisitor.visitMethodInsn(INVOKESTATIC, "org/aion/avm/api/BlockchainRuntime", "getData", "()[B", false);
+            methodVisitor.visitMethodInsn(INVOKESTATIC, "org/aion/avm/api/ABIDecoder", "decodeArguments", "([B)[Ljava/lang/Object;", false);
+            methodVisitor.visitVarInsn(ASTORE, 2);
+
+            Label latestLabel = new Label();
+            Label firstLabel = latestLabel;
+
+            for (ABICompilerMethodVisitor callableMethod : this.getCallableMethodVisitors()) {
+
+                // latestLabel is the goto label of the preceding if condition
+                methodVisitor.visitLabel(latestLabel);
+                methodVisitor.visitVarInsn(ALOAD, 1);
+                methodVisitor.visitLdcInsn(callableMethod.getMethodName());
+                methodVisitor.visitMethodInsn(INVOKEVIRTUAL, "java/lang/String", "equals", "(Ljava/lang/Object;)Z", false);
+                latestLabel = new Label();
+                methodVisitor.visitJumpInsn(IFEQ, latestLabel);
+
+                // load the various arguments as indicated by the function signature, casting them as needed
+                Type[] argTypes = Type.getArgumentTypes(callableMethod.getDescriptor());
+
+                for (int i = 0; i < argTypes.length; i++) {
+                    methodVisitor.visitVarInsn(ALOAD, 2);
+                    methodVisitor.visitIntInsn(BIPUSH, i);
+                    methodVisitor.visitInsn(AALOAD);
+                    castArgumentType(methodVisitor, argTypes[i]);
+                }
+
+                // return ABIEncoder.encodeOneObject(<methodName>(<arguments>));
+                methodVisitor.visitMethodInsn(INVOKESTATIC, className, callableMethod.getMethodName(), callableMethod.getDescriptor(), false);
+                castReturnType(methodVisitor, Type.getReturnType(callableMethod.getDescriptor()));
+                methodVisitor.visitMethodInsn(INVOKESTATIC, "org/aion/avm/api/ABIEncoder", "encodeOneObject", "(Ljava/lang/Object;)[B", false);
+                methodVisitor.visitInsn(ARETURN);
+            }
+
+            // this latestLabel is the catch-all else, we just return null
+            methodVisitor.visitLabel(latestLabel);
+            methodVisitor.visitFrame(Opcodes.F_APPEND, 3, new Object[]{"[B", "java/lang/String", "[Ljava/lang/Object;"}, 0, null);
+            methodVisitor.visitInsn(ACONST_NULL);
             methodVisitor.visitInsn(ARETURN);
-            methodVisitor.visitMaxs(2, 0);
+            Label lastLabel = new Label();
+            methodVisitor.visitLabel(lastLabel);
+            methodVisitor.visitLocalVariable("inputBytes", "[B", null, label1, lastLabel, 0);
+            methodVisitor.visitLocalVariable("methodName", "Ljava/lang/String;", null, label2, lastLabel, 1);
+            methodVisitor.visitLocalVariable("argValues", "[Ljava/lang/Object;", null, firstLabel, lastLabel, 2);
+            methodVisitor.visitMaxs(2, 3);
             methodVisitor.visitEnd();
         }
         if (!isMain && hasMain) {
             throw new IllegalMainMethodsException("Non-main class can't have main() method!");
         }
         super.visitEnd();
+    }
+
+    private void castArgumentType(MethodVisitor mv, Type t) {
+        switch (t.getSort()) {
+            case Type.BOOLEAN:
+                mv.visitTypeInsn(CHECKCAST, "java/lang/Boolean");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false);
+                break;
+            case Type.INT:
+                mv.visitTypeInsn(CHECKCAST, "java/lang/Integer");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Integer", "intValue", "()I", false);
+                break;
+            case Type.BYTE:
+                mv.visitTypeInsn(CHECKCAST, "java/lang/Byte");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Byte", "byteValue", "()B", false);
+                break;
+            case Type.CHAR:
+                mv.visitTypeInsn(CHECKCAST, "java/lang/Character");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Character", "charValue", "()C", false);
+                break;
+            case Type.SHORT:
+                mv.visitTypeInsn(CHECKCAST, "java/lang/Short");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Short", "shortValue", "()S", false);
+                break;
+            case Type.LONG:
+                mv.visitTypeInsn(CHECKCAST, "java/lang/Long");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Long", "longValue", "()J", false);
+                break;
+            case Type.DOUBLE:
+                mv.visitTypeInsn(CHECKCAST, "java/lang/Double");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Double", "doubleValue", "()D", false);
+                break;
+            case Type.FLOAT:
+                mv.visitTypeInsn(CHECKCAST, "java/lang/Float");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Float", "floatValue", "()F", false);
+                break;
+            case Type.OBJECT:
+            case Type.ARRAY:
+                System.out.println(t.getInternalName());
+                mv.visitTypeInsn(CHECKCAST, t.getInternalName());
+                break;
+        }
+    }
+
+    private void castReturnType(MethodVisitor mv, Type t) {
+        switch (t.getSort()) {
+            case Type.BOOLEAN:
+                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;", false);
+                break;
+            case Type.INT:
+                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);
+                break;
+            case Type.BYTE:
+                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Byte", "valueOf", "(B)Ljava/lang/Byte;", false);
+                break;
+            case Type.CHAR:
+                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Character", "valueOf", "(C)Ljava/lang/Character;", false);
+                break;
+            case Type.SHORT:
+                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Short", "valueOf", "(S)Ljava/lang/Short;", false);
+                break;
+            case Type.LONG:
+                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Long", "valueOf", "(J)Ljava/lang/Long;", false);
+                break;
+            case Type.DOUBLE:
+                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Double", "valueOf", "(D)Ljava/lang/Double;", false);
+                break;
+            case Type.FLOAT:
+                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Float", "valueOf", "(F)Ljava/lang/Float;", false);
+                break;
+            case Type.OBJECT:
+            case Type.ARRAY:
+                break;
+        }
     }
 }

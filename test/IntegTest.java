@@ -2,7 +2,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
+import java.io.DataOutputStream;
+import java.io.FileOutputStream;
 import java.math.BigInteger;
+import java.util.Arrays;
+
 import org.aion.abigenerator.ABICompiler;
 import org.aion.avm.api.ABIDecoder;
 import org.aion.avm.api.ABIEncoder;
@@ -18,7 +22,8 @@ import org.junit.Test;
 
 public class IntegTest {
 
-    @Rule public AvmRule avmRule = new AvmRule(true);
+    @Rule
+    public AvmRule avmRule = new AvmRule(true);
 
     private static ABICompiler compiler;
 
@@ -42,11 +47,11 @@ public class IntegTest {
         // Deploy.
         TransactionResult createResult =
                 avmRule.deploy(
-                                avmRule.getPreminedAccount(),
-                                BigInteger.ZERO,
-                                txData,
-                                ENERGY_LIMIT,
-                                ENERGY_PRICE)
+                        avmRule.getPreminedAccount(),
+                        BigInteger.ZERO,
+                        txData,
+                        ENERGY_LIMIT,
+                        ENERGY_PRICE)
                         .getTransactionResult();
         assertEquals(AvmTransactionResult.Code.SUCCESS, createResult.getResultCode());
         return new Address(createResult.getReturnData());
@@ -56,12 +61,12 @@ public class IntegTest {
         byte[] argData = ABIEncoder.encodeMethodArguments(methodName, arguments);
         TransactionResult result =
                 avmRule.call(
-                                avmRule.getPreminedAccount(),
-                                dapp,
-                                BigInteger.ZERO,
-                                argData,
-                                ENERGY_LIMIT,
-                                ENERGY_PRICE)
+                        avmRule.getPreminedAccount(),
+                        dapp,
+                        BigInteger.ZERO,
+                        argData,
+                        ENERGY_LIMIT,
+                        ENERGY_PRICE)
                         .getTransactionResult();
         assertEquals(AvmTransactionResult.Code.SUCCESS, result.getResultCode());
         return ABIDecoder.decodeOneObject(result.getReturnData());
@@ -75,6 +80,9 @@ public class IntegTest {
         Address dapp = installTestDApp();
 
         boolean ret = (Boolean) callStatic(dapp, "test1", true);
+        assertTrue(ret);
+
+        ret = (Boolean) callStatic(dapp, "test2", 1, "test2", new long[]{1, 2, 3});
         assertTrue(ret);
     }
 
@@ -90,5 +98,45 @@ public class IntegTest {
         assertEquals("No, 3, you are NOT greater than 4", ret);
         ret = (String) callStatic(dapp, "amIGreater", 5, 4);
         assertEquals("Yes, 5, you are greater than 4", ret);
+    }
+
+    @Test
+    public void testGenerateMainAndCallMethod() {
+
+        byte[] jar = JarBuilder.buildJarForMainAndClasses(HelloWorldNoMain.class);
+        compiler.compile(new ByteArrayInputStream(jar));
+
+/*               DataOutputStream dout = null;
+        try {
+            dout = new DataOutputStream(
+                    new FileOutputStream(compiler.getMainClassName() + ".class"));
+            dout.write(compiler.getMainClassBytes());
+            dout.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }*/
+
+        Address dapp = installTestDApp();
+
+        String ret = (String) callStatic(dapp, "returnHelloWorld");
+        assertEquals("Hello world", ret);
+
+        ret = (String) callStatic(dapp, "returnGoodbyeWorld");
+        assertEquals("Goodbye world", ret);
+
+        ret = (String) callStatic(dapp, "returnEcho", "Code meets world");
+        assertEquals("Code meets world", ret);
+
+        ret = (String) callStatic(dapp, "returnAppended", "alpha", "bet");
+        assertEquals("alphabet", ret);
+
+        ret = (String) callStatic(dapp, "returnAppendedMultiTypes", "alpha", "bet", false, 123);
+        assertEquals("alphabetfalse123", ret);
+
+        int[] intArray = (int[]) callStatic(dapp, "returnArrayOfInt", 1, 2, 3);
+        assertTrue(Arrays.equals(new int[]{1, 2, 3}, intArray));
+
+        String[] strArray = (String[]) callStatic(dapp, "returnArrayOfString", "hello", "world", "!");
+        assertTrue(Arrays.equals(new String[]{"hello", "world", "!"}, strArray));
     }
 }

@@ -48,10 +48,10 @@ public class ABICompilerMethodVisitor extends MethodVisitor {
         boolean isStatic = (this.access & Opcodes.ACC_STATIC) != 0;
         if(Type.getType(descriptor).getClassName().equals(Callable.class.getName()) ) {
             if (!isPublic) {
-                throw new CallableMismatchNonPublicException("Annotation 'Callable' mismatches non-public access modifiers(protected/private)!");
+                throw new CallableMismatchNonPublicException(this.methodName);
             }
             if (!isStatic) {
-                throw new CallableMismatchNonStaticException("Annotation 'Callable' mismatches non-static access modifiers!");
+                throw new CallableMismatchNonStaticException(this.methodName);
             }
             callable = true;
             return null;

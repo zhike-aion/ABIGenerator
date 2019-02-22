@@ -42,13 +42,23 @@ public class AnnotationsTest {
     @Test(expected = CallableMismatchNonPublicException.class)
     public void testGetAnnotationsWrongCallableForNonPublic() {
         byte[] jar = JarBuilder.buildJarForMainAndClasses(SimpleDAppWrongCallable.class);
-        compiler.compile(new ByteArrayInputStream(jar));
+        try {
+            compiler.compile(new ByteArrayInputStream(jar));
+        } catch(CallableMismatchNonPublicException e) {
+            assertTrue(e.getMessage().contains("test4"));
+            throw e;
+        }
     }
 
     @Test(expected = CallableMismatchNonStaticException.class)
     public void testGetAnnotationsWrongCallableForNonStatic() {
         byte[] jar = JarBuilder.buildJarForMainAndClasses(SimpleDAppWrongCallable1.class);
-        compiler.compile(new ByteArrayInputStream(jar));
+        try {
+            compiler.compile(new ByteArrayInputStream(jar));
+        } catch(CallableMismatchNonStaticException e) {
+            assertTrue(e.getMessage().contains("test2"));
+            throw e;
+        }
     }
 
     @Test

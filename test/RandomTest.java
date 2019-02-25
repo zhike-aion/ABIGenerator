@@ -247,10 +247,8 @@ public class RandomTest {
         }
     }
 
-
-
     private static String getMethodDescriptor(String argumentsDescriptor) {
-        return String.format("(%s)[Ljava/lang/Object;", argumentsDescriptor);
+        return String.format("(%s)[B", argumentsDescriptor);
     }
 
     private String getRandomArgumentsDescriptor(int argumentsNumber) {

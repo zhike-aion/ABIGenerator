@@ -45,7 +45,7 @@ public class ABICompilerClassVisitor extends ClassVisitor {
                     foundFallback = true;
                 }
                 else {
-                    // fail
+                    throw new AnnotationException("Only one function can be marked @Fallback", mv.getMethodName());
                 }
             }
         }
@@ -74,9 +74,6 @@ public class ABICompilerClassVisitor extends ClassVisitor {
     @Override
     public void visitEnd() {
         postProcess();
-        if (isMainClass && fallbackMethodName.isEmpty()) {
-            addFallbackMethod();
-        }
         if (isMainClass && !hasMainMethod) {
             addMainMethod();
         }
@@ -84,16 +81,6 @@ public class ABICompilerClassVisitor extends ClassVisitor {
             throw new IllegalMainMethodsException("Non-main class can't have main() method!");
         }
         super.visitEnd();
-    }
-
-    private void addFallbackMethod() {
-        fallbackMethodName = "fallback";
-        // write function signature
-        MethodVisitor methodVisitor =
-            super.visitMethod(ACC_PRIVATE | ACC_STATIC, "fallback", "()V", null, null);
-        methodVisitor.visitCode();
-        methodVisitor.visitMethodInsn(INVOKESTATIC, "org/aion/avm/api/BlockchainRuntime", "revert", "()V", false);
-        methodVisitor.visitInsn(RETURN);
     }
 
     private void addMainMethod() {
@@ -153,7 +140,10 @@ public class ABICompilerClassVisitor extends ClassVisitor {
         // this latestLabel is the catch-all else, we just return null
         methodVisitor.visitLabel(latestLabel);
         methodVisitor.visitFrame(Opcodes.F_APPEND, 3, new Object[]{"[B", "java/lang/String", "[Ljava/lang/Object;"}, 0, null);
-        methodVisitor.visitMethodInsn(INVOKESTATIC, className, fallbackMethodName, "()V", false);
+        if (!fallbackMethodName.isEmpty()) {
+            methodVisitor.visitMethodInsn(
+                    INVOKESTATIC, className, fallbackMethodName, "()V", false);
+        }
         methodVisitor.visitInsn(ACONST_NULL);
         methodVisitor.visitInsn(ARETURN);
         Label lastLabel = new Label();

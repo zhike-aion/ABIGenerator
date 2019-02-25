@@ -57,11 +57,14 @@ public class ABICompilerMethodVisitor extends MethodVisitor {
             isCallable = true;
             return null;
         } else if (Type.getType(descriptor).getClassName().equals(Fallback.class.getName())) {
-            if (Type.getReturnType(descriptor) != Type.VOID_TYPE) {
+            if (!isStatic) {
+                throw new AnnotationException("Fallback function must be static", methodName);
+            }
+            if (Type.getReturnType(methodDescriptor) != Type.VOID_TYPE) {
                 throw new AnnotationException(
                     "Function annotated @Fallback must have void return type", methodName);
             }
-            if (Type.getArgumentTypes(descriptor).length != 0) {
+            if (Type.getArgumentTypes(methodDescriptor).length != 0) {
                 throw new AnnotationException(
                     "Function annotated @Fallback cannot take arguments", methodName);
             }

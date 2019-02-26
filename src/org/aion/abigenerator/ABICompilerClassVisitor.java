@@ -8,37 +8,47 @@ import java.util.List;
 import static org.objectweb.asm.Opcodes.*;
 
 public class ABICompilerClassVisitor extends ClassVisitor {
-    private boolean isMain;
-    private boolean hasMain = false;
+    private boolean isMainClass;
+    private boolean hasMainMethod = false;
     private String className;
+    private String fallbackMethodName = "";
     private List<ABICompilerMethodVisitor> methodVisitors = new ArrayList<>();
+    private List<ABICompilerMethodVisitor> callableMethodVisitors = new ArrayList<>();
+    private List<String> signatures = new ArrayList<>();
 
     public ABICompilerClassVisitor(ClassWriter cw) {
         super(Opcodes.ASM6, cw);
     }
 
     public void setMain() {
-        isMain = true;
+        isMainClass = true;
     }
 
     public List<String> getCallables() {
-        List<String> signatures = new ArrayList<>();
-        for (ABICompilerMethodVisitor mv : methodVisitors) {
-            if (mv.isCallable()) {
-                signatures.add(this.className + ": " + mv.getSignature());
-            }
-        }
         return signatures;
     }
 
     public List<ABICompilerMethodVisitor> getCallableMethodVisitors() {
-        List<ABICompilerMethodVisitor> callableMethodVisitors = new ArrayList<>();
+        return callableMethodVisitors;
+    }
+
+    private void postProcess() {
+        boolean foundFallback = false;
         for (ABICompilerMethodVisitor mv : methodVisitors) {
             if (mv.isCallable()) {
+                signatures.add(this.className + ": " + mv.getSignature());
                 callableMethodVisitors.add(mv);
             }
+            if (mv.isFallback()) {
+                if(!foundFallback) {
+                    fallbackMethodName = mv.getMethodName();
+                    foundFallback = true;
+                }
+                else {
+                    throw new AnnotationException("Only one function can be marked @Fallback", mv.getMethodName());
+                }
+            }
         }
-        return callableMethodVisitors;
     }
 
     @Override
@@ -51,11 +61,11 @@ public class ABICompilerClassVisitor extends ClassVisitor {
     public MethodVisitor visitMethod(
             int access, String name, String descriptor, String signature, String[] exceptions) {
         if (name.equals("main") && ((access & Opcodes.ACC_PUBLIC) != 0)) {
-            hasMain = true;
+            hasMainMethod = true;
         }
         ABICompilerMethodVisitor mv = new ABICompilerMethodVisitor(access, name, descriptor,
                 super.visitMethod(access, name, descriptor, signature, exceptions));
-        if (isMain) {
+        if (isMainClass) {
             methodVisitors.add(mv);
         }
         return mv;
@@ -63,78 +73,86 @@ public class ABICompilerClassVisitor extends ClassVisitor {
 
     @Override
     public void visitEnd() {
-        if (isMain && !hasMain) {
-
-            // write function signature
-            MethodVisitor methodVisitor =
-                    super.visitMethod(ACC_PUBLIC | ACC_STATIC, "main", "()[B", null, null);
-            methodVisitor.visitCode();
-
-            // set inputBytes = BlockchainRuntime.getData();
-            methodVisitor.visitMethodInsn(INVOKESTATIC, "org/aion/avm/api/BlockchainRuntime", "getData", "()[B", false);
-            methodVisitor.visitVarInsn(ASTORE, 0);
-            Label label1 = new Label();
-            methodVisitor.visitLabel(label1);
-
-            // set methodName = ABIDecoder.decodeMethodName(inputBytes);
-            methodVisitor.visitVarInsn(ALOAD, 0);
-            methodVisitor.visitMethodInsn(INVOKESTATIC, "org/aion/avm/api/ABIDecoder", "decodeMethodName", "([B)Ljava/lang/String;", false);
-            methodVisitor.visitVarInsn(ASTORE, 1);
-            Label label2 = new Label();
-            methodVisitor.visitLabel(label2);
-
-            // set argValues = ABIDecoder.decodeArguments(BlockchainRuntime.getData());
-            methodVisitor.visitMethodInsn(INVOKESTATIC, "org/aion/avm/api/BlockchainRuntime", "getData", "()[B", false);
-            methodVisitor.visitMethodInsn(INVOKESTATIC, "org/aion/avm/api/ABIDecoder", "decodeArguments", "([B)[Ljava/lang/Object;", false);
-            methodVisitor.visitVarInsn(ASTORE, 2);
-
-            Label latestLabel = new Label();
-            Label firstLabel = latestLabel;
-
-            for (ABICompilerMethodVisitor callableMethod : this.getCallableMethodVisitors()) {
-
-                // latestLabel is the goto label of the preceding if condition
-                methodVisitor.visitLabel(latestLabel);
-                methodVisitor.visitVarInsn(ALOAD, 1);
-                methodVisitor.visitLdcInsn(callableMethod.getMethodName());
-                methodVisitor.visitMethodInsn(INVOKEVIRTUAL, "java/lang/String", "equals", "(Ljava/lang/Object;)Z", false);
-                latestLabel = new Label();
-                methodVisitor.visitJumpInsn(IFEQ, latestLabel);
-
-                // load the various arguments as indicated by the function signature, casting them as needed
-                Type[] argTypes = Type.getArgumentTypes(callableMethod.getDescriptor());
-
-                for (int i = 0; i < argTypes.length; i++) {
-                    methodVisitor.visitVarInsn(ALOAD, 2);
-                    methodVisitor.visitIntInsn(BIPUSH, i);
-                    methodVisitor.visitInsn(AALOAD);
-                    castArgumentType(methodVisitor, argTypes[i]);
-                }
-
-                // return ABIEncoder.encodeOneObject(<methodName>(<arguments>));
-                methodVisitor.visitMethodInsn(INVOKESTATIC, className, callableMethod.getMethodName(), callableMethod.getDescriptor(), false);
-                castReturnType(methodVisitor, Type.getReturnType(callableMethod.getDescriptor()));
-                methodVisitor.visitMethodInsn(INVOKESTATIC, "org/aion/avm/api/ABIEncoder", "encodeOneObject", "(Ljava/lang/Object;)[B", false);
-                methodVisitor.visitInsn(ARETURN);
-            }
-
-            // this latestLabel is the catch-all else, we just return null
-            methodVisitor.visitLabel(latestLabel);
-            methodVisitor.visitFrame(Opcodes.F_APPEND, 3, new Object[]{"[B", "java/lang/String", "[Ljava/lang/Object;"}, 0, null);
-            methodVisitor.visitInsn(ACONST_NULL);
-            methodVisitor.visitInsn(ARETURN);
-            Label lastLabel = new Label();
-            methodVisitor.visitLabel(lastLabel);
-            methodVisitor.visitLocalVariable("inputBytes", "[B", null, label1, lastLabel, 0);
-            methodVisitor.visitLocalVariable("methodName", "Ljava/lang/String;", null, label2, lastLabel, 1);
-            methodVisitor.visitLocalVariable("argValues", "[Ljava/lang/Object;", null, firstLabel, lastLabel, 2);
-            methodVisitor.visitMaxs(2, 3);
-            methodVisitor.visitEnd();
+        postProcess();
+        if (isMainClass && !hasMainMethod) {
+            addMainMethod();
         }
-        if (!isMain && hasMain) {
+        if (!isMainClass && hasMainMethod) {
             throw new IllegalMainMethodsException("Non-main class can't have main() method!");
         }
         super.visitEnd();
+    }
+
+    private void addMainMethod() {
+        // write function signature
+        MethodVisitor methodVisitor =
+            super.visitMethod(ACC_PUBLIC | ACC_STATIC, "main", "()[B", null, null);
+        methodVisitor.visitCode();
+
+        // set inputBytes = BlockchainRuntime.getData();
+        methodVisitor.visitMethodInsn(INVOKESTATIC, "org/aion/avm/api/BlockchainRuntime", "getData", "()[B", false);
+        methodVisitor.visitVarInsn(ASTORE, 0);
+        Label label1 = new Label();
+        methodVisitor.visitLabel(label1);
+
+        // set methodName = ABIDecoder.decodeMethodName(inputBytes);
+        methodVisitor.visitVarInsn(ALOAD, 0);
+        methodVisitor.visitMethodInsn(INVOKESTATIC, "org/aion/avm/api/ABIDecoder", "decodeMethodName", "([B)Ljava/lang/String;", false);
+        methodVisitor.visitVarInsn(ASTORE, 1);
+        Label label2 = new Label();
+        methodVisitor.visitLabel(label2);
+
+        // set argValues = ABIDecoder.decodeArguments(BlockchainRuntime.getData());
+        methodVisitor.visitMethodInsn(INVOKESTATIC, "org/aion/avm/api/BlockchainRuntime", "getData", "()[B", false);
+        methodVisitor.visitMethodInsn(INVOKESTATIC, "org/aion/avm/api/ABIDecoder", "decodeArguments", "([B)[Ljava/lang/Object;", false);
+        methodVisitor.visitVarInsn(ASTORE, 2);
+
+        Label latestLabel = new Label();
+        Label firstLabel = latestLabel;
+
+        for (ABICompilerMethodVisitor callableMethod : this.getCallableMethodVisitors()) {
+
+            // latestLabel is the goto label of the preceding if condition
+            methodVisitor.visitLabel(latestLabel);
+            methodVisitor.visitVarInsn(ALOAD, 1);
+            methodVisitor.visitLdcInsn(callableMethod.getMethodName());
+            methodVisitor.visitMethodInsn(INVOKEVIRTUAL, "java/lang/String", "equals", "(Ljava/lang/Object;)Z", false);
+            latestLabel = new Label();
+            methodVisitor.visitJumpInsn(IFEQ, latestLabel);
+
+            // load the various arguments as indicated by the function signature, casting them as needed
+            Type[] argTypes = Type.getArgumentTypes(callableMethod.getDescriptor());
+
+            for (int i = 0; i < argTypes.length; i++) {
+                methodVisitor.visitVarInsn(ALOAD, 2);
+                methodVisitor.visitIntInsn(BIPUSH, i);
+                methodVisitor.visitInsn(AALOAD);
+                castArgumentType(methodVisitor, argTypes[i]);
+            }
+
+            // return ABIEncoder.encodeOneObject(<methodName>(<arguments>));
+            methodVisitor.visitMethodInsn(INVOKESTATIC, className, callableMethod.getMethodName(), callableMethod.getDescriptor(), false);
+            castReturnType(methodVisitor, Type.getReturnType(callableMethod.getDescriptor()));
+            methodVisitor.visitMethodInsn(INVOKESTATIC, "org/aion/avm/api/ABIEncoder", "encodeOneObject", "(Ljava/lang/Object;)[B", false);
+            methodVisitor.visitInsn(ARETURN);
+        }
+
+        // this latestLabel is the catch-all else, we just return null
+        methodVisitor.visitLabel(latestLabel);
+        methodVisitor.visitFrame(Opcodes.F_APPEND, 3, new Object[]{"[B", "java/lang/String", "[Ljava/lang/Object;"}, 0, null);
+        if (!fallbackMethodName.isEmpty()) {
+            methodVisitor.visitMethodInsn(
+                    INVOKESTATIC, className, fallbackMethodName, "()V", false);
+        }
+        methodVisitor.visitInsn(ACONST_NULL);
+        methodVisitor.visitInsn(ARETURN);
+        Label lastLabel = new Label();
+        methodVisitor.visitLabel(lastLabel);
+        methodVisitor.visitLocalVariable("inputBytes", "[B", null, label1, lastLabel, 0);
+        methodVisitor.visitLocalVariable("methodName", "Ljava/lang/String;", null, label2, lastLabel, 1);
+        methodVisitor.visitLocalVariable("argValues", "[Ljava/lang/Object;", null, firstLabel, lastLabel, 2);
+        methodVisitor.visitMaxs(2, 3);
+        methodVisitor.visitEnd();
     }
 
     private void castArgumentType(MethodVisitor mv, Type t) {
@@ -173,7 +191,6 @@ public class ABICompilerClassVisitor extends ClassVisitor {
                 break;
             case Type.OBJECT:
             case Type.ARRAY:
-                System.out.println(t.getInternalName());
                 mv.visitTypeInsn(CHECKCAST, t.getInternalName());
                 break;
         }

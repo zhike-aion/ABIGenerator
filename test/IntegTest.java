@@ -1,3 +1,4 @@
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -69,7 +70,11 @@ public class IntegTest {
                         ENERGY_PRICE)
                         .getTransactionResult();
         assertEquals(AvmTransactionResult.Code.SUCCESS, result.getResultCode());
-        return ABIDecoder.decodeOneObject(result.getReturnData());
+        if (result.getReturnData() != null) {
+            return ABIDecoder.decodeOneObject(result.getReturnData());
+        } else {
+            return null;
+        }
     }
 
     @Test
@@ -134,9 +139,28 @@ public class IntegTest {
         assertEquals("alphabetfalse123", ret);
 
         int[] intArray = (int[]) callStatic(dapp, "returnArrayOfInt", 1, 2, 3);
-        assertTrue(Arrays.equals(new int[]{1, 2, 3}, intArray));
+        assertArrayEquals(new int[]{1, 2, 3}, intArray);
 
         String[] strArray = (String[]) callStatic(dapp, "returnArrayOfString", "hello", "world", "!");
-        assertTrue(Arrays.equals(new String[]{"hello", "world", "!"}, strArray));
+        assertArrayEquals(new String[]{"hello", "world", "!"}, strArray);
+    }
+
+
+    @Test
+    public void testFallback() {
+        byte[] jar =
+            JarBuilder.buildJarForMainAndClasses(SimpleDAppNoMain.class);
+        compiler.compile(new ByteArrayInputStream(jar));
+        Address dapp = installTestDApp();
+
+        int oldVal = (Integer) callStatic(dapp, "getValue");
+        callStatic(dapp, "garbageMethod", 7);
+        int newVal = (Integer) callStatic(dapp, "getValue");
+
+        assertEquals(oldVal + 10, newVal);
+        callStatic(dapp, "", 7);
+
+        newVal = (Integer) callStatic(dapp, "getValue");
+        assertEquals(oldVal + 20, newVal);
     }
 }

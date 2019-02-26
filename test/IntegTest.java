@@ -158,6 +158,9 @@ public class IntegTest {
         int newVal = (Integer) callStatic(dapp, "getValue");
 
         assertEquals(oldVal + 10, newVal);
+        callStatic(dapp, "", 7);
 
+        newVal = (Integer) callStatic(dapp, "getValue");
+        assertEquals(oldVal + 20, newVal);
     }
 }

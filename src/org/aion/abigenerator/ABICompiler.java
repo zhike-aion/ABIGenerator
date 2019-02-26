@@ -16,6 +16,7 @@ import java.util.jar.Manifest;
 public class ABICompiler {
 
     private static final int MAX_CLASS_BYTES = 1024 * 1024;
+    private static final float VERSION_NUMBER = 0.0F;
 
     private String mainClassName;
     private byte[] mainClassBytes;
@@ -43,6 +44,7 @@ public class ABICompiler {
         compiler.compile(fileInputStream);
 
         List<String> callables = compiler.getCallables();
+        System.out.println(VERSION_NUMBER);
         for (String s : callables) System.out.println(s);
 
         try {
@@ -154,5 +156,9 @@ public class ABICompiler {
 
     public Map<String, byte[]> getClassMap() {
         return outputClassMap;
+    }
+
+    public static float getVersionNumber() {
+        return VERSION_NUMBER;
     }
 }

@@ -1,14 +1,4 @@
-
-import java.io.ByteArrayInputStream;
-import java.io.DataOutputStream;
-import java.io.FileOutputStream;
-import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Random;
-
 import org.aion.abigenerator.ABICompiler;
-import org.aion.avm.abi.internal.ABICodec;
 import org.aion.avm.api.ABIDecoder;
 import org.aion.avm.api.ABIEncoder;
 import org.aion.avm.api.Address;
@@ -17,8 +7,19 @@ import org.aion.avm.core.util.AvmRule;
 import org.aion.avm.core.util.CodeAndArguments;
 import org.aion.kernel.AvmTransactionResult;
 import org.aion.vm.api.interfaces.TransactionResult;
-import org.junit.*;
-import org.objectweb.asm.*;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodVisitor;
+
+import java.io.ByteArrayInputStream;
+import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.HashMap;
 
 import static org.junit.Assert.assertEquals;
 import static org.objectweb.asm.Opcodes.*;
@@ -84,8 +85,8 @@ public class RandomTest {
 
         String methodName = argsGenerator.getRandomString(9);
 
-        System.out.println(String.format("%s.%s%s --- %s arguments", className , methodName,
-                        RandomTest.getMethodDescriptor(String.join("", argsGenerator.getArgDescriptors())), argsGenerator.getNumberOfArgs()));
+//        System.out.println(String.format("%s.%s%s --- %s arguments", className , methodName,
+//                        RandomTest.getMethodDescriptor(String.join("", argsGenerator.getArgDescriptors())), argsGenerator.getNumberOfArgs()));
 
         byte[] jar = JarBuilder.buildJarForExplicitClassNamesAndBytecode(className, createClass(methodName, argsGenerator), new HashMap<>());
         compiler.compile(new ByteArrayInputStream(jar));
@@ -113,8 +114,8 @@ public class RandomTest {
 
         String methodName = argsGenerator.getRandomString(9);
 
-        System.out.println(String.format("%s.%s%s --- %s arguments", className , methodName,
-                RandomTest.getMethodDescriptor(String.join("", argsGenerator.getArgDescriptors())), argsGenerator.getNumberOfArgs()));
+//        System.out.println(String.format("%s.%s%s --- %s arguments", className , methodName,
+//                RandomTest.getMethodDescriptor(String.join("", argsGenerator.getArgDescriptors())), argsGenerator.getNumberOfArgs()));
 
         byte[] jar = JarBuilder.buildJarForExplicitClassNamesAndBytecode(className, createClass(methodName, argsGenerator), new HashMap<>());
         compiler.compile(new ByteArrayInputStream(jar));
@@ -130,6 +131,7 @@ public class RandomTest {
         ClassWriter classWriter = new ClassWriter(0);
         classWriter.visit(V10, ACC_PUBLIC + ACC_SUPER, "RandomClass", null, "java/lang/Object", null);
 
+        // Create method. It's descriptor is random.
         MethodVisitor methodVisitor = classWriter.visitMethod(ACC_PUBLIC | ACC_STATIC,
                 methodName,
                 RandomTest.getMethodDescriptor(String.join("", argsGenerator.getArgDescriptors())),
@@ -139,32 +141,43 @@ public class RandomTest {
         annotationVisitor.visitEnd();
         methodVisitor.visitCode();
 
+        // Load the first parameter of ABIEncoder.encodeMethodArguments.
         Label label0 = new Label();
         methodVisitor.visitLabel(label0);
         methodVisitor.visitLdcInsn("");
 
+        // Create an Object[] with the same size as the arguments.
+        // new Object[]{v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11 ...}
         methodVisitor.visitIntInsn(BIPUSH, argsGenerator.getArgTypes().length);
         methodVisitor.visitTypeInsn(ANEWARRAY, "java/lang/Object");
         int index = 0;
         for(int i = 0; i < argsGenerator.getArgDescriptors().length; ++i, ++index) {
             methodVisitor.visitInsn(DUP);
             methodVisitor.visitIntInsn(BIPUSH, i);
+            // Load one local variable
             loadLocalVariableToStack(methodVisitor, argsGenerator.getArgTypes()[i], index);
+            // LONG is stored in two local variables. Thus, we need to increment index by one more.
+            // The same for DOUBLE.
             if(argsGenerator.getArgTypes()[i] == Type.LONG || argsGenerator.getArgTypes()[i] == Type.DOUBLE) index++;
+            // Cast primitive types to their corresponding Object types.
             castArgumentType(methodVisitor, argsGenerator.getArgTypes()[i]);
+            // Store this object generated from the method argument to Object[].
             methodVisitor.visitInsn(AASTORE);
         }
 
+        // Finally,
+        // return ABIEncoder.encodeMethodArguments("", new Object[]{v1, v2, v3, v4, v5, ...})
         methodVisitor.visitMethodInsn(INVOKESTATIC, "org/aion/avm/api/ABIEncoder", "encodeMethodArguments", "(Ljava/lang/String;[Ljava/lang/Object;)[B", false);
         methodVisitor.visitInsn(ARETURN);
 
         Label label1 = new Label();
         methodVisitor.visitLabel(label1);
 
+        // Create local variables for the method arguments.
         index = 0;
         for(int i = 0; i < argsGenerator.getArgDescriptors().length; ++i, ++index) {
-            System.out.println(String.format("%s %s %s", argsGenerator.getArgTypes()[i], getTypeDescriptor(argsGenerator.getArgTypes()[i]), argsGenerator.getVarArgs()[i]));
-            methodVisitor.visitLocalVariable("v" + String.valueOf(i+1), getTypeDescriptor(argsGenerator.getArgTypes()[i]), null, label0, label1, index);
+            //System.out.println(String.format("%s %s %s", argsGenerator.getArgTypes()[i], getTypeDescriptor(argsGenerator.getArgTypes()[i]), argsGenerator.getVarArgs()[i]));
+            methodVisitor.visitLocalVariable("v" + (i + 1), getTypeDescriptor(argsGenerator.getArgTypes()[i]), null, label0, label1, index);
             if(argsGenerator.getArgTypes()[i] == Type.LONG || argsGenerator.getArgTypes()[i] == Type.DOUBLE) index++;
         }
 

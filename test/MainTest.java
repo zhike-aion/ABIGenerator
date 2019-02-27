@@ -27,7 +27,7 @@ public class MainTest {
         ABICompiler.main(new String[] {System.getProperty("user.dir") + "/test/dapp.jar"});
         assertEquals(
                 ABICompiler.getVersionNumber()
-                        + "\nChattyCalculator: public static java.lang.String amIGreater(int, int)\n",
+                        + "\norg/aion/abigenerator/ChattyCalculator: public static java.lang.String amIGreater(int, int)\n",
                 outContent.toString());
     }
 }

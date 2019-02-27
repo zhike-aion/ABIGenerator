@@ -1,5 +1,6 @@
-package org.aion.abigenerator;
-
+import org.aion.abigenerator.ABICompiler;
+import org.aion.abigenerator.CallableMismatchNonPublicException;
+import org.aion.abigenerator.CallableMismatchNonStaticException;
 import org.aion.avm.core.dappreading.JarBuilder;
 import org.junit.Before;
 import org.junit.Test;
@@ -12,7 +13,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 
-public class ExtractAnnotationsTest {
+public class AnnotationsTest {
 
     private static ABICompiler compiler;
 
@@ -22,10 +23,10 @@ public class ExtractAnnotationsTest {
     }
 
     @Test
-    public void testOneClass() {
+    public void testGetAnnotations() {
         List<String> callables = new ArrayList<>();
         try {
-            byte[] jar = JarBuilder.buildJarForMainAndClasses(SimpleDAppWithMain.class);
+            byte[] jar = JarBuilder.buildJarForMainAndClasses(SimpleDApp.class);
 
             compiler.compile(new ByteArrayInputStream(jar));
             callables = compiler.getCallables();
@@ -34,12 +35,12 @@ public class ExtractAnnotationsTest {
             e.printStackTrace();
         }
         assertEquals(2, callables.size());
-        assertTrue(callables.get(0).equals("org/aion/abigenerator/SimpleDAppWithMain: public static boolean test1(boolean)"));
-        assertTrue(callables.get(1).equals("org/aion/abigenerator/SimpleDAppWithMain: public static boolean test2(int, java.lang.String, long[])"));
+        assertTrue(callables.get(0).equals("SimpleDApp: public static boolean test1(boolean)"));
+        assertTrue(callables.get(1).equals("SimpleDApp: public static boolean test2(int, java.lang.String, long[])"));
     }
 
     @Test(expected = CallableMismatchNonPublicException.class)
-    public void testCallableMismatchNonPublicException() {
+    public void testGetAnnotationsWrongCallableForNonPublic() {
         byte[] jar = JarBuilder.buildJarForMainAndClasses(SimpleDAppWrongCallable.class);
         try {
             compiler.compile(new ByteArrayInputStream(jar));
@@ -50,7 +51,7 @@ public class ExtractAnnotationsTest {
     }
 
     @Test(expected = CallableMismatchNonStaticException.class)
-    public void testCallableMismatchNonStaticException() {
+    public void testGetAnnotationsWrongCallableForNonStatic() {
         byte[] jar = JarBuilder.buildJarForMainAndClasses(SimpleDAppWrongCallable1.class);
         try {
             compiler.compile(new ByteArrayInputStream(jar));
@@ -61,10 +62,10 @@ public class ExtractAnnotationsTest {
     }
 
     @Test
-    public void testMultiClasses() {
+    public void testGetAnnotationsFromMultiClasses() {
         List<String> callables = new ArrayList<>();
         try {
-            byte[] jar = JarBuilder.buildJarForMainAndClasses(SimpleDAppWithMain.class, SimpleDAppNoMain.class);
+            byte[] jar = JarBuilder.buildJarForMainAndClasses(SimpleDApp.class, SimpleDAppNoMain.class);
 
             compiler.compile(new ByteArrayInputStream(jar));
             callables = compiler.getCallables();

@@ -1,4 +1,4 @@
-package org.aion.abigenerator;
+import org.aion.abigenerator.Callable;
 
 public class ChattyCalculator {
 

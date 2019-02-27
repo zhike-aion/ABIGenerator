@@ -1,5 +1,3 @@
-package org.aion.abigenerator;
-
 public enum Type {
     BYTE            (1),
     BOOLEAN         (2),

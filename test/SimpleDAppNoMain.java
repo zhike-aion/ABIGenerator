@@ -1,4 +1,5 @@
-package org.aion.abigenerator;
+import org.aion.abigenerator.Callable;
+import org.aion.abigenerator.Fallback;
 
 public class SimpleDAppNoMain {
 

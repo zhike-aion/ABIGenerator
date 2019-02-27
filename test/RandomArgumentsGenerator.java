@@ -1,5 +1,3 @@
-package org.aion.abigenerator;
-
 import org.aion.avm.abi.internal.ABICodec;
 import org.junit.Assert;
 

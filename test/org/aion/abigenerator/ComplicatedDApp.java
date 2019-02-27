@@ -1,6 +1,6 @@
-import org.aion.abigenerator.Callable;
+package org.aion.abigenerator;
 
-public class HelloWorldNoMain {
+public class ComplicatedDApp {
 
     @Callable
     public static String returnHelloWorld() {

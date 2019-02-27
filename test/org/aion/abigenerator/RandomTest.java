@@ -1,14 +1,10 @@
+package org.aion.abigenerator;
 
 import java.io.ByteArrayInputStream;
-import java.io.DataOutputStream;
-import java.io.FileOutputStream;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Random;
 
-import org.aion.abigenerator.ABICompiler;
-import org.aion.avm.abi.internal.ABICodec;
 import org.aion.avm.api.ABIDecoder;
 import org.aion.avm.api.ABIEncoder;
 import org.aion.avm.api.Address;

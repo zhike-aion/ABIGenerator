@@ -1,8 +1,9 @@
+package org.aion.abigenerator;
+
 import static org.junit.Assert.assertEquals;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
-import org.aion.abigenerator.ABICompiler;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -22,9 +23,9 @@ public class MainTest {
     }
 
     @Test
-    public void testMain() {
+    public void testMainMethodOfABICompiler() {
 
-        ABICompiler.main(new String[] {System.getProperty("user.dir") + "/test/dapp.jar"});
+        ABICompiler.main(new String[] {System.getProperty("user.dir") + "/test/resources/dapp.jar"});
         assertEquals(
                 ABICompiler.getVersionNumber()
                         + "\nChattyCalculator: public static java.lang.String amIGreater(int, int)\n",

@@ -1,17 +1,12 @@
+package org.aion.abigenerator;
+
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.objectweb.asm.Opcodes.*;
 
 import java.io.ByteArrayInputStream;
-import java.io.DataOutputStream;
-import java.io.FileOutputStream;
 import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Random;
 
-import org.aion.abigenerator.ABICompiler;
 import org.aion.avm.api.ABIDecoder;
 import org.aion.avm.api.ABIEncoder;
 import org.aion.avm.api.Address;
@@ -23,7 +18,6 @@ import org.aion.vm.api.interfaces.TransactionResult;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.objectweb.asm.*;
 
 public class IntegTest {
 
@@ -81,8 +75,9 @@ public class IntegTest {
         }
     }
 
+    //Simplest case.
     @Test
-    public void testSimpleDAppNoMain() {
+    public void testSimpleDApp() {
 
         byte[] jar = JarBuilder.buildJarForMainAndClasses(SimpleDAppNoMain.class);
         compiler.compile(new ByteArrayInputStream(jar));
@@ -95,6 +90,7 @@ public class IntegTest {
         assertTrue(ret);
     }
 
+    //Multiple classes. One class is imported.
     @Test
     public void testChattyCalculator() {
 
@@ -109,21 +105,14 @@ public class IntegTest {
         assertEquals("Yes, 5, you are greater than 4", ret);
     }
 
+    //One complicated class with multiple types of arguments, multiple types of return values, complicated function body.
     @Test
-    public void testGenerateMainAndCallMethod() {
+    public void testComplicatedDApp() {
 
-        byte[] jar = JarBuilder.buildJarForMainAndClasses(HelloWorldNoMain.class);
+        byte[] jar = JarBuilder.buildJarForMainAndClasses(ComplicatedDApp.class);
         compiler.compile(new ByteArrayInputStream(jar));
 
-/*               DataOutputStream dout = null;
-        try {
-            dout = new DataOutputStream(
-                    new FileOutputStream(compiler.getMainClassName() + ".class"));
-            dout.write(compiler.getMainClassBytes());
-            dout.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }*/
+        //org.aion.abigenerator.TestHelpers.saveMainClassInABICompiler(compiler);
 
         Address dapp = installTestDApp();
 
@@ -148,7 +137,6 @@ public class IntegTest {
         String[] strArray = (String[]) callStatic(dapp, "returnArrayOfString", "hello", "world", "!");
         assertArrayEquals(new String[]{"hello", "world", "!"}, strArray);
     }
-
 
     @Test
     public void testFallback() {

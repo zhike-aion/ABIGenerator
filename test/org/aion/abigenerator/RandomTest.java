@@ -1,10 +1,5 @@
 package org.aion.abigenerator;
 
-import java.io.ByteArrayInputStream;
-import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.HashMap;
-
 import org.aion.avm.api.ABIDecoder;
 import org.aion.avm.api.ABIEncoder;
 import org.aion.avm.api.Address;
@@ -21,6 +16,10 @@ import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
+
+import java.io.ByteArrayInputStream;
+import java.math.BigInteger;
+import java.util.HashMap;
 
 import static org.junit.Assert.assertEquals;
 import static org.objectweb.asm.Opcodes.*;

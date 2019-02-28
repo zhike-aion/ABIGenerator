@@ -60,6 +60,9 @@ public class ABICompilerClassVisitor extends ClassVisitor {
     @Override
     public MethodVisitor visitMethod(
             int access, String name, String descriptor, String signature, String[] exceptions) {
+        if (name.equals("<init>")) {
+            return null;
+        }
         if (name.equals("main") && ((access & Opcodes.ACC_PUBLIC) != 0)) {
             hasMainMethod = true;
         }

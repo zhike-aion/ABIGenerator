@@ -8,7 +8,6 @@ import java.util.List;
 import static org.objectweb.asm.Opcodes.*;
 
 public class ABICompilerClassVisitor extends ClassVisitor {
-    private boolean isMainClass;
     private boolean hasMainMethod = false;
     private String className;
     private String fallbackMethodName = "";
@@ -18,10 +17,6 @@ public class ABICompilerClassVisitor extends ClassVisitor {
 
     public ABICompilerClassVisitor(ClassWriter cw) {
         super(Opcodes.ASM6, cw);
-    }
-
-    public void setMain() {
-        isMainClass = true;
     }
 
     public List<String> getCallables() {
@@ -68,20 +63,15 @@ public class ABICompilerClassVisitor extends ClassVisitor {
         }
         ABICompilerMethodVisitor mv = new ABICompilerMethodVisitor(access, name, descriptor,
                 super.visitMethod(access, name, descriptor, signature, exceptions));
-        if (isMainClass) {
             methodVisitors.add(mv);
-        }
         return mv;
     }
 
     @Override
     public void visitEnd() {
         postProcess();
-        if (isMainClass && !hasMainMethod) {
+        if (!hasMainMethod) {
             addMainMethod();
-        }
-        if (!isMainClass && hasMainMethod) {
-            throw new IllegalMainMethodsException("Non-main class can't have main() method!");
         }
         super.visitEnd();
     }

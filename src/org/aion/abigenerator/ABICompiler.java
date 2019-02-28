@@ -1,9 +1,15 @@
 package org.aion.abigenerator;
 
+import java.io.DataOutputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import org.aion.avm.core.dappreading.JarBuilder;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 
-import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -20,9 +26,9 @@ public class ABICompiler {
 
     private String mainClassName;
     private byte[] mainClassBytes;
+    private byte[] outputJarFile;
     private List<String> callables = new ArrayList<>();
-    private Map<String, byte[]> inputClassMap = new HashMap<>();
-    private Map<String, byte[]> outputClassMap = new HashMap<>();
+    private Map<String, byte[]> classMap = new HashMap<>();
 
     public static void main(String[] args) {
         if (args.length != 1) {
@@ -50,15 +56,9 @@ public class ABICompiler {
         try {
             DataOutputStream dout =
                     new DataOutputStream(
-                            new FileOutputStream(compiler.getMainClassName() + ".class"));
-            dout.write(compiler.getMainClassBytes());
+                            new FileOutputStream("outputJar" + ".jar"));
+            dout.write(compiler.getJarFile());
             dout.close();
-
-            for (HashMap.Entry<String, byte[]> entry : compiler.outputClassMap.entrySet()) {
-                dout = new DataOutputStream(new FileOutputStream(entry.getKey() + ".class"));
-                dout.write(entry.getValue());
-                dout.close();
-            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -74,29 +74,22 @@ public class ABICompiler {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        for (Map.Entry<String, byte[]> clazz : inputClassMap.entrySet()) {
-            ClassReader reader = new ClassReader(clazz.getValue());
-            ClassWriter classWriter = new ClassWriter(0);
-            ABICompilerClassVisitor classVisitor = new ABICompilerClassVisitor(classWriter) {};
-            if (clazz.getKey().equals(mainClassName)) {
-                classVisitor.setMain();
-            }
-            try {
-                reader.accept(classVisitor, 0);
-            } catch (Exception e) {
-                throw e;
-            }
-            callables.addAll(classVisitor.getCallables());
-            if (clazz.getKey().equals(mainClassName)) {
-                mainClassBytes = classWriter.toByteArray();
-            } else {
-                outputClassMap.put(clazz.getKey(), classWriter.toByteArray());
-            }
+
+        ClassReader reader = new ClassReader(mainClassBytes);
+        ClassWriter classWriter = new ClassWriter(0);
+        ABICompilerClassVisitor classVisitor = new ABICompilerClassVisitor(classWriter) {};
+        try {
+            reader.accept(classVisitor, 0);
+        } catch (Exception e) {
+            throw e;
         }
+        callables = classVisitor.getCallables();
+        mainClassBytes = classWriter.toByteArray();
+        outputJarFile = JarBuilder.buildJarForExplicitClassNamesAndBytecode(mainClassName, mainClassBytes, classMap);
     }
 
     private void safeLoadFromBytes(InputStream byteReader) throws Exception {
-        inputClassMap = new HashMap<>();
+        classMap = new HashMap<>();
         mainClassName = null;
 
         try (JarInputStream jarReader = new JarInputStream(byteReader, true)) {
@@ -132,7 +125,10 @@ public class ABICompiler {
                         throw new Exception("Class file too big: " + name);
                     }
                     System.arraycopy(tempReadingBuffer, 0, classBytes, 0, readSize);
-                    inputClassMap.put(qualifiedClassName, classBytes);
+                    if(qualifiedClassName.equals(mainClassName))
+                        mainClassBytes = classBytes;
+                    else
+                    classMap.put(qualifiedClassName, classBytes);
                 }
             }
         }
@@ -155,10 +151,14 @@ public class ABICompiler {
     }
 
     public Map<String, byte[]> getClassMap() {
-        return outputClassMap;
+        return classMap;
     }
 
     public static float getVersionNumber() {
         return VERSION_NUMBER;
+    }
+
+    public byte [] getJarFile() {
+        return outputJarFile;
     }
 }

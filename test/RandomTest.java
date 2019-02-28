@@ -181,7 +181,7 @@ public class RandomTest {
             if(argsGenerator.getArgTypes()[i] == Type.LONG || argsGenerator.getArgTypes()[i] == Type.DOUBLE) index++;
         }
 
-        methodVisitor.visitMaxs(index, index);
+        methodVisitor.visitMaxs(6, index);
         methodVisitor.visitEnd();
 
 /*        DataOutputStream dout = null;

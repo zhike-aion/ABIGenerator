@@ -18,7 +18,6 @@ import org.objectweb.asm.MethodVisitor;
 
 import java.io.ByteArrayInputStream;
 import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.HashMap;
 
 import static org.junit.Assert.assertEquals;
@@ -95,7 +94,7 @@ public class RandomTest {
 
         byte[] result = (byte[]) callStatic(dapp, methodName, argsGenerator.getVarArgs());
         byte[] expected = ABIEncoder.encodeMethodArguments("",argsGenerator.getVarArgs());
-        Assert.assertTrue(Arrays.equals(expected, result));
+        Assert.assertArrayEquals(expected, result);
     }
 
     @Test
@@ -124,9 +123,18 @@ public class RandomTest {
 
         byte[] result = (byte[]) callStatic(dapp, methodName, argsGenerator.getVarArgs());
         byte[] expected = ABIEncoder.encodeMethodArguments("",argsGenerator.getVarArgs());
-        Assert.assertTrue(Arrays.equals(expected, result));
+        Assert.assertArrayEquals(expected, result);
     }
 
+    /*
+    An example of generated class:
+    public class RandomClass {
+        @Callable
+        public static byte[] nWGIW8DCM(byte v1, double[] v2, char[] v3, boolean v4, int[] v5, float v6, short v7, float[] v8, String v9, char v10) {
+            return ABIEncoder.encodeMethodArguments("", new Object[]{v1, v2, v3, v4, v5, v6, v7, v8, v9, v10});
+        }
+    }
+    */
     private byte[] createClass(String methodName, RandomArgumentsGenerator argsGenerator) {
         ClassWriter classWriter = new ClassWriter(0);
         classWriter.visit(V10, ACC_PUBLIC + ACC_SUPER, "RandomClass", null, "java/lang/Object", null);

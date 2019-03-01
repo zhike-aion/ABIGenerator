@@ -1,6 +1,6 @@
 package org.aion.abigenerator;
 
-public class ComplicatedDApp {
+public class TestDAppTarget {
 
     @Callable
     public static String returnHelloWorld() {

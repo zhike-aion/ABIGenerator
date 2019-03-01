@@ -55,8 +55,7 @@ public class ABICompiler {
 
         try {
             DataOutputStream dout =
-                    new DataOutputStream(
-                            new FileOutputStream("outputJar" + ".jar"));
+                    new DataOutputStream(new FileOutputStream("outputJar" + ".jar"));
             dout.write(compiler.getJarFile());
             dout.close();
         } catch (IOException e) {
@@ -85,7 +84,9 @@ public class ABICompiler {
         }
         callables = classVisitor.getCallableSignatures();
         mainClassBytes = classWriter.toByteArray();
-        outputJarFile = JarBuilder.buildJarForExplicitClassNamesAndBytecode(mainClassName, mainClassBytes, classMap);
+        outputJarFile =
+                JarBuilder.buildJarForExplicitClassNamesAndBytecode(
+                        mainClassName, mainClassBytes, classMap);
     }
 
     private void safeLoadFromBytes(InputStream byteReader) throws Exception {
@@ -125,10 +126,8 @@ public class ABICompiler {
                         throw new Exception("Class file too big: " + name);
                     }
                     System.arraycopy(tempReadingBuffer, 0, classBytes, 0, readSize);
-                    if(qualifiedClassName.equals(mainClassName))
-                        mainClassBytes = classBytes;
-                    else
-                    classMap.put(qualifiedClassName, classBytes);
+                    if (qualifiedClassName.equals(mainClassName)) mainClassBytes = classBytes;
+                    else classMap.put(qualifiedClassName, classBytes);
                 }
             }
         }
@@ -158,7 +157,7 @@ public class ABICompiler {
         return VERSION_NUMBER;
     }
 
-    public byte [] getJarFile() {
+    public byte[] getJarFile() {
         return outputJarFile;
     }
 }

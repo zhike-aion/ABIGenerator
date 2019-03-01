@@ -18,7 +18,7 @@ public class MainGenerationTest {
     @Test
     public void testOneClass() {
         try {
-            byte[] jar = JarBuilder.buildJarForMainAndClasses(SimpleDAppNoMain.class);
+            byte[] jar = JarBuilder.buildJarForMainAndClasses(DAppNoMainWithFallbackTarget.class);
             compiler.compile(new ByteArrayInputStream(jar));
 
             TestHelpers.saveMainClassInABICompiler(compiler);
@@ -32,7 +32,7 @@ public class MainGenerationTest {
         try {
             byte[] jar =
                     JarBuilder.buildJarForMainAndClasses(
-                            SimpleDAppNoMain.class, SimpleDAppNoMain1.class);
+                        DAppNoMainWithFallbackTarget.class, DAppNoMainNoFallbackTarget.class);
             compiler.compile(new ByteArrayInputStream(jar));
 
             TestHelpers.saveAllClassesInABICompiler(compiler);
@@ -41,18 +41,12 @@ public class MainGenerationTest {
         }
     }
 
-    @Test(expected = IllegalMainMethodsException.class)
-    public void testIllegalMainMethodsException() {
-        byte[] jar = JarBuilder.buildJarForMainAndClasses(SimpleDAppNoMain.class, SimpleDAppWithMain.class);
-        compiler.compile(new ByteArrayInputStream(jar));
-    }
-
     @Test
     public void testImportedClass() {
         try {
             byte[] jar =
                     JarBuilder.buildJarForMainAndClasses(
-                            ChattyCalculator.class, DumbCalculator.class);
+                            ChattyCalculatorTarget.class, SilentCalculatorTarget.class);
             compiler.compile(new ByteArrayInputStream(jar));
 
             TestHelpers.saveAllClassesInABICompiler(compiler);

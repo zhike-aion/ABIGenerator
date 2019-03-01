@@ -1,6 +1,6 @@
 package org.aion.abigenerator;
 
-public class SimpleDAppNoMain1 {
+public class DAppNoMainNoFallbackTarget {
 
     @Callable()
     public static boolean test1(boolean b) {

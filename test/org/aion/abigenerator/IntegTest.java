@@ -77,7 +77,7 @@ public class IntegTest {
     @Test
     public void testSimpleDApp() {
 
-        byte[] jar = JarBuilder.buildJarForMainAndClasses(SimpleDAppNoMain.class);
+        byte[] jar = JarBuilder.buildJarForMainAndClasses(DAppNoMainWithFallbackTarget.class);
         compiler.compile(new ByteArrayInputStream(jar));
         Address dapp = installTestDApp();
 
@@ -93,7 +93,7 @@ public class IntegTest {
     public void testChattyCalculator() {
 
         byte[] jar =
-                JarBuilder.buildJarForMainAndClasses(ChattyCalculator.class, DumbCalculator.class);
+                JarBuilder.buildJarForMainAndClasses(ChattyCalculatorTarget.class, SilentCalculatorTarget.class);
         compiler.compile(new ByteArrayInputStream(jar));
         Address dapp = installTestDApp();
 
@@ -107,7 +107,7 @@ public class IntegTest {
     @Test
     public void testComplicatedDApp() {
 
-        byte[] jar = JarBuilder.buildJarForMainAndClasses(ComplicatedDApp.class);
+        byte[] jar = JarBuilder.buildJarForMainAndClasses(TestDAppTarget.class);
         compiler.compile(new ByteArrayInputStream(jar));
 
         //org.aion.abigenerator.TestHelpers.saveMainClassInABICompiler(compiler);
@@ -139,7 +139,7 @@ public class IntegTest {
     @Test
     public void testFallback() {
         byte[] jar =
-            JarBuilder.buildJarForMainAndClasses(SimpleDAppNoMain.class);
+            JarBuilder.buildJarForMainAndClasses(DAppNoMainWithFallbackTarget.class);
         compiler.compile(new ByteArrayInputStream(jar));
         Address dapp = installTestDApp();
 

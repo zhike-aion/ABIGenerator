@@ -1,17 +1,14 @@
 package org.aion.abigenerator;
 
-import org.aion.abigenerator.ABICompiler;
-import org.aion.abigenerator.AnnotationException;
-import org.aion.avm.core.dappreading.JarBuilder;
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import org.aion.avm.core.dappreading.JarBuilder;
+import org.junit.Before;
+import org.junit.Test;
 
 
 public class ExtractAnnotationsTest {
@@ -27,7 +24,7 @@ public class ExtractAnnotationsTest {
     public void testOneClass() {
         List<String> callables = new ArrayList<>();
         try {
-            byte[] jar = JarBuilder.buildJarForMainAndClasses(SimpleDAppWithMain.class);
+            byte[] jar = JarBuilder.buildJarForMainAndClasses(DAppWithMainNoFallbackTarget.class);
 
             compiler.compile(new ByteArrayInputStream(jar));
             callables = compiler.getCallables();
@@ -36,13 +33,13 @@ public class ExtractAnnotationsTest {
             e.printStackTrace();
         }
         assertEquals(2, callables.size());
-        assertTrue(callables.get(0).equals("org/aion/abigenerator/SimpleDAppWithMain: public static boolean test1(boolean)"));
-        assertTrue(callables.get(1).equals("org/aion/abigenerator/SimpleDAppWithMain: public static boolean test2(int, java.lang.String, long[])"));
+        assertTrue(callables.get(0).equals("org/aion/abigenerator/DAppWithMainNoFallbackTarget: public static boolean test1(boolean)"));
+        assertTrue(callables.get(1).equals("org/aion/abigenerator/DAppWithMainNoFallbackTarget: public static boolean test2(int, java.lang.String, long[])"));
     }
 
     @Test(expected = AnnotationException.class)
     public void testNonPublicCallable() {
-        byte[] jar = JarBuilder.buildJarForMainAndClasses(SimpleDAppWrongCallable.class);
+        byte[] jar = JarBuilder.buildJarForMainAndClasses(DAppProtectedCallableTarget.class);
         try {
             compiler.compile(new ByteArrayInputStream(jar));
         } catch(AnnotationException e) {
@@ -53,7 +50,7 @@ public class ExtractAnnotationsTest {
 
     @Test(expected = AnnotationException.class)
         public void testNonStaticCallable() {
-        byte[] jar = JarBuilder.buildJarForMainAndClasses(SimpleDAppWrongCallable1.class);
+        byte[] jar = JarBuilder.buildJarForMainAndClasses(DAppNonstaticCallableTarget.class);
         try {
             compiler.compile(new ByteArrayInputStream(jar));
         } catch(AnnotationException e) {
@@ -66,7 +63,7 @@ public class ExtractAnnotationsTest {
     public void testMultiClasses() {
         List<String> callables = new ArrayList<>();
         try {
-            byte[] jar = JarBuilder.buildJarForMainAndClasses(SimpleDAppWithMain.class, SimpleDAppNoMain.class);
+            byte[] jar = JarBuilder.buildJarForMainAndClasses(DAppWithMainNoFallbackTarget.class, DAppNoMainWithFallbackTarget.class);
 
             compiler.compile(new ByteArrayInputStream(jar));
             callables = compiler.getCallables();

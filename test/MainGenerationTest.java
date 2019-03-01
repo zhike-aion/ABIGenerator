@@ -4,7 +4,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Map;
 import org.aion.abigenerator.ABICompiler;
-import org.aion.abigenerator.IllegalMainMethodsException;
 import org.aion.avm.core.dappreading.JarBuilder;
 import org.junit.Before;
 import org.junit.Test;

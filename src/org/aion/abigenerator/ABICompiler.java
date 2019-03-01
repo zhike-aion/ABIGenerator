@@ -83,7 +83,7 @@ public class ABICompiler {
         } catch (Exception e) {
             throw e;
         }
-        callables = classVisitor.getCallables();
+        callables = classVisitor.getCallableSignatures();
         mainClassBytes = classWriter.toByteArray();
         outputJarFile = JarBuilder.buildJarForExplicitClassNamesAndBytecode(mainClassName, mainClassBytes, classMap);
     }

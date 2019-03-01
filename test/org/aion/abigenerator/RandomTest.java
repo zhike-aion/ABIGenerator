@@ -1,4 +1,5 @@
-import org.aion.abigenerator.ABICompiler;
+package org.aion.abigenerator;
+
 import org.aion.avm.api.ABIDecoder;
 import org.aion.avm.api.ABIEncoder;
 import org.aion.avm.api.Address;

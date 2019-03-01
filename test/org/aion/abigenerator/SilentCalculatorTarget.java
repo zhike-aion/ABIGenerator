@@ -1,6 +1,6 @@
 package org.aion.abigenerator;
 
-public class DumbCalculator {
+public class SilentCalculatorTarget {
     @Callable()
     public static boolean greaterThan(int a, int b) {
         return a > b;

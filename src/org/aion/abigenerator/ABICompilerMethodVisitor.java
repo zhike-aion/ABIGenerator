@@ -18,7 +18,7 @@ public class ABICompilerMethodVisitor extends MethodVisitor {
         return isCallable;
     }
 
-    // Should only be called on public methods
+    // Should only be called on public static methods
     public String getSignature() {
         String signature = "";
 
@@ -49,10 +49,10 @@ public class ABICompilerMethodVisitor extends MethodVisitor {
         boolean isStatic = (this.access & Opcodes.ACC_STATIC) != 0;
         if(Type.getType(descriptor).getClassName().equals(Callable.class.getName())) {
             if (!isPublic) {
-                throw new CallableMismatchNonPublicException(this.methodName);
+                throw new AnnotationException("@Callable methods must be public", methodName);
             }
             if (!isStatic) {
-                throw new CallableMismatchNonStaticException(this.methodName);
+                throw new AnnotationException("@Callable methods must be public", methodName);
             }
             isCallable = true;
             return null;

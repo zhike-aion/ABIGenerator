@@ -3,9 +3,9 @@ package org.aion.abigenerator;
 import org.aion.avm.api.ABIDecoder;
 import org.aion.avm.api.BlockchainRuntime;
 
-public class SimpleDAppWrongCallable1 {
+public class DAppProtectedCallableTarget {
     public static byte[] main() {
-        return ABIDecoder.decodeAndRunWithClass(SimpleDAppWithMain.class, BlockchainRuntime.getData());
+        return ABIDecoder.decodeAndRunWithClass(DAppWithMainNoFallbackTarget.class, BlockchainRuntime.getData());
     }
 
     @Callable()
@@ -14,12 +14,17 @@ public class SimpleDAppWrongCallable1 {
     }
 
     @Callable()
-    public boolean test2(int i, String s, long[] l) {
+    public static boolean test2(int i, String s, long[] l) {
         return true;
     }
 
     @Deprecated
     public static boolean test3(int i, String s, long[] l) {
+        return true;
+    }
+
+    @Callable()
+    protected boolean test4(int i, String s, long[] l) {
         return true;
     }
 }

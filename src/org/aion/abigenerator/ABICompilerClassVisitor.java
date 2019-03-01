@@ -1,31 +1,30 @@
 package org.aion.abigenerator;
 
-import org.objectweb.asm.*;
-
 import java.util.ArrayList;
 import java.util.List;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 
 import static org.objectweb.asm.Opcodes.*;
 
 public class ABICompilerClassVisitor extends ClassVisitor {
-    private boolean isMainClass;
     private boolean hasMainMethod = false;
     private String className;
     private String fallbackMethodName = "";
     private List<ABICompilerMethodVisitor> methodVisitors = new ArrayList<>();
     private List<ABICompilerMethodVisitor> callableMethodVisitors = new ArrayList<>();
-    private List<String> signatures = new ArrayList<>();
+    private List<String> callableSignatures = new ArrayList<>();
 
     public ABICompilerClassVisitor(ClassWriter cw) {
         super(Opcodes.ASM6, cw);
     }
 
-    public void setMain() {
-        isMainClass = true;
-    }
-
-    public List<String> getCallables() {
-        return signatures;
+    public List<String> getCallableSignatures() {
+        return callableSignatures;
     }
 
     public List<ABICompilerMethodVisitor> getCallableMethodVisitors() {
@@ -34,9 +33,12 @@ public class ABICompilerClassVisitor extends ClassVisitor {
 
     private void postProcess() {
         boolean foundFallback = false;
+
+        // We have to make a second pass to create the list of callables
+
         for (ABICompilerMethodVisitor mv : methodVisitors) {
             if (mv.isCallable()) {
-                signatures.add(this.className + ": " + mv.getSignature());
+                callableSignatures.add(this.className + ": " + mv.getSignature());
                 callableMethodVisitors.add(mv);
             }
             if (mv.isFallback()) {
@@ -68,20 +70,15 @@ public class ABICompilerClassVisitor extends ClassVisitor {
         }
         ABICompilerMethodVisitor mv = new ABICompilerMethodVisitor(access, name, descriptor,
                 super.visitMethod(access, name, descriptor, signature, exceptions));
-        if (isMainClass) {
             methodVisitors.add(mv);
-        }
         return mv;
     }
 
     @Override
     public void visitEnd() {
         postProcess();
-        if (isMainClass && !hasMainMethod) {
+        if (!hasMainMethod) {
             addMainMethod();
-        }
-        if (!isMainClass && hasMainMethod) {
-            throw new IllegalMainMethodsException("Non-main class can't have main() method!");
         }
         super.visitEnd();
     }

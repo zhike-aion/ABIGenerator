@@ -1,3 +1,5 @@
+## The new location of this project is at https://github.com/aionnetwork/AVM , in module of AVM/org.aion.avm.tooling .
+
 # ABIGenerator
 
 A tool to extract callable methods and to modify bytecodes of classes in a dapp jar.
